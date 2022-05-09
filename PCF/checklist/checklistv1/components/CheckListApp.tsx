@@ -1,9 +1,16 @@
 /* eslint-disable no-use-before-define */
+import { initializeIcons } from '@fluentui/react';
 import * as React from 'react';
 import { QueryCache, QueryClient, QueryClientProvider } from 'react-query';
 import { PcfContextProvider } from '../services/PcfContext';
 import { IPcfContextServiceProps, PcfContextService } from '../services/PcfContextService';
-import { CheckList } from '../components/CheckList';
+//import { CheckList } from '../components/CheckList';
+
+import { Stack } from '@fluentui/react/lib/Stack';
+
+type Dataset = ComponentFramework.PropertyTypes.DataSet;
+
+initializeIcons();
 
 
 // declare outside of FC element so it doesnt gets evaluated at each rerenders
@@ -42,10 +49,10 @@ const CheckListApp = (props: IPcfContextServiceProps): JSX.Element => {
     return (
         <QueryClientProvider client={queryClient} contextSharing={true}>
             <PcfContextProvider pcfcontext={pcfcontextservice}>
-                    <CheckList                                            
+                    {/*<CheckList                                            */}
 
 
-                    />
+                    {/*/>*/}
 
             </PcfContextProvider>
         </QueryClientProvider>

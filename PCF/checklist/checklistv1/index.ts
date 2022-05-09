@@ -44,11 +44,11 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         this._notifyOutputChanged = notifyOutputChanged
         this._container = document.createElement('div')
 
+        //Initialize the Compoonent on load and pass the properties to the checklist props
+        //this._appprops = {
+        //    context: context,
 
-        this._appprops = {
-            context: context,
-
-        }
+        //}
         container.appendChild(this._container)
     }
 
@@ -74,7 +74,11 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
      */
     public getOutputs(): IOutputs
     {
-        return {};
+        console.log('INDEX - getOutputs------------------------');
+        console.log(this);
+        return {
+            
+        }
     }
 
     /**
@@ -84,6 +88,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     public destroy(): void
     {
         // Add code to cleanup control if necessary
+        ReactDOM.unmountComponentAtNode(this._container);
     }
 
 
