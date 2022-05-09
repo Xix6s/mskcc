@@ -9,7 +9,7 @@ import { initializeIcons } from '@fluentui/react/lib/Icons';
 
 //CUSTOM
 import { IPcfContextServiceProps } from './services/PcfContextService';
-import  CheckListApp  from './components/CheckListApp';
+import { CheckListApp, ICheckListProps } from './components/CheckListApp';
 
 
 type DataSet = ComponentFramework.PropertyTypes.DataSet;
@@ -19,7 +19,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     entity: string = "";
     private _notifyOutputChanged: () => void;
     private _container: HTMLDivElement;
-    private _appprops: IPcfContextServiceProps;
+    private _appprops: ICheckListProps;
 
     /**
      * Empty constructor.
@@ -44,11 +44,11 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         this._notifyOutputChanged = notifyOutputChanged
         this._container = document.createElement('div')
 
+        //Initialize the Compoonent on load and pass the properties to the checklist props
+        //this._appprops = {
+        //    context: context,
 
-        this._appprops = {
-            context: context,
-
-        }
+        //}
         container.appendChild(this._container)
     }
 
@@ -60,7 +60,10 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     public updateView(context: ComponentFramework.Context<IInputs>): void
     {
         console.log('updateView---------------------');
-
+        this._appprops.dataset = context.parameters.sampleDataSet;
+        //Is this only a Template? **CHANGE THE HARD CODE
+        this._appprops.isTemplate = false;
+        this._appprops.util = context.utils;
         // RENDER React Component
         ReactDOM.render(
             React.createElement(CheckListApp, this._appprops),
@@ -74,7 +77,11 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
      */
     public getOutputs(): IOutputs
     {
-        return {};
+        console.log('INDEX - getOutputs------------------------');
+        console.log(this);
+        return {
+            
+        }
     }
 
     /**
@@ -84,6 +91,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     public destroy(): void
     {
         // Add code to cleanup control if necessary
+        ReactDOM.unmountComponentAtNode(this._container);
     }
 
 
