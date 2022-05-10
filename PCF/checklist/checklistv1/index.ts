@@ -8,7 +8,6 @@ import { initializeIcons } from '@fluentui/react/lib/Icons';
 
 
 //CUSTOM
-import { IPcfContextServiceProps } from './services/PcfContextService';
 import { CheckListApp, ICheckListProps } from './components/CheckListApp';
 
 
@@ -41,15 +40,8 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     {
         console.log('INIT-------------------------------------');
         console.log(context);
-        this._notifyOutputChanged = notifyOutputChanged
-        this._container = document.createElement('div')
 
-        //Initialize the Compoonent on load and pass the properties to the checklist props
-        //this._appprops = {
-        //    context: context,
-
-        //}
-        container.appendChild(this._container)
+        context.mode.trackContainerResize(true);
     }
 
 
