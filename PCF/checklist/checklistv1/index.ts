@@ -40,8 +40,9 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     {
         console.log('INIT-------------------------------------');
         console.log(context);
+        this._container = container;
+        //context.mode.trackContainerResize(true);
 
-        context.mode.trackContainerResize(true);
     }
 
 

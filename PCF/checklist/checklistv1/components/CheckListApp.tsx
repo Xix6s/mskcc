@@ -3,8 +3,10 @@ import { initializeIcons } from '@fluentui/react';
 import * as React from 'react';
 import { QueryCache, QueryClient, QueryClientProvider } from 'react-query';
 //import { CheckList } from '../components/CheckList';
+import { useItems } from '../hooks/useItems';
 
 import { Stack } from '@fluentui/react/lib/Stack';
+import { Text, ITextProps } from '@fluentui/react/lib/Text';
 
 type Dataset = ComponentFramework.PropertyTypes.DataSet;
 
@@ -38,9 +40,12 @@ export const CheckListApp = React.memo(function CheckList({
     isTemplate
 }: ICheckListProps): JSX.Element {
     console.log(dataset);
+    //const { items } = useItems(dataset);
 
     return (
         <Stack>
+            <Text>Section</Text>
+            
 
         </Stack>
     );
