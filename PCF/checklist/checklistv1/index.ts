@@ -53,15 +53,17 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     public updateView(context: ComponentFramework.Context<IInputs>): void
     {
         console.log('updateView---------------------');
-        this._appprops.dataset = context.parameters.sampleDataSet;
-        //Is this only a Template? **CHANGE THE HARD CODE
-        this._appprops.isTemplate = false;
-        this._appprops.util = context.utils;
-        // RENDER React Component
-        ReactDOM.render(
-            React.createElement(CheckListApp, this._appprops),
-            this._container
-        )
+        //this._appprops.dataset = context.parameters.sampleDataSet;
+        ////Is this only a Template? **CHANGE THE HARD CODE
+        //this._appprops.isTemplate = false;
+        //this._appprops.util = context.utils;
+        //// RENDER React Component
+        //ReactDOM.render(
+        //    React.createElement(CheckListApp, this._appprops),
+        //    this._container
+        //);
+
+        this.renderCheckList(context);
     }
 
     /**
@@ -73,8 +75,8 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         console.log('INDEX - getOutputs------------------------');
         console.log(this);
         return {
-            
-        }
+
+        };
     }
 
     /**
@@ -87,5 +89,37 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         ReactDOM.unmountComponentAtNode(this._container);
     }
 
+    private renderCheckList(context: ComponentFramework.Context<IInputs>) {
+        console.log('renderCheckList---------------');
+
+        let checkList = '';
+        let sections = context.parameters.sampleDataSet.records;
+        
+
+        
+        //context.parameters.sampleDataSet.records['6ebba16f-9ecf-ec11-a7b5-6045bd0116db']._record.fields.createdby
+
+        context.webAPI.retrieveMultipleRecords('xix_question', '?$filter=_xix_checklistsection_value eq d662adba-a9cd-ec11-a7b5-6045bd0066f1').then(
+            function success(results) {
+                for (var i = 0; i < results.entities.length; i++) {
+                    var xix_questionid = results.entities[i]["xix_questionid"];
+                }
+            },
+            function (error) {
+                console.log(error);
+            }
+        );
+
+        let sectionhtml = `<div class="ms-Grid" dir="ltr">
+  <div class="ms-Grid-row">
+    <div class="ms-Grid-col ms-sm6 ms-md4 ms-lg2">A</div>
+    <div class="ms-Grid-col ms-sm6 ms-md8 ms-lg10">B</div>
+  </div>
+</div>`;
+
+        this._container.innerHTML = sectionhtml;
+
+    }
+    
 
 }

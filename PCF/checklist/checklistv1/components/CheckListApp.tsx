@@ -34,12 +34,8 @@ export interface ICheckListProps {
 };
 
 // eslint-disable-next-line no-undef
-export const CheckListApp = React.memo(function CheckList({
-    dataset,
-    util,
-    isTemplate
-}: ICheckListProps): JSX.Element {
-    console.log(dataset);
+export const CheckListApp = (props: ICheckListProps): JSX.Element => {
+    console.log(props.dataset);
     //const { items } = useItems(dataset);
 
     return (
@@ -50,8 +46,6 @@ export const CheckListApp = React.memo(function CheckList({
         </Stack>
     );
 
-}, (prevProps, newProps) => {
-    return prevProps.dataset === newProps.dataset
-});
+};
     
     

@@ -18,7 +18,7 @@ export interface ICheckListProps {
 
 };
 
-const CheckList = (props: ICheckListProps): JSX.Element => {
+const CheckList = (props: ICheckListProps) => {
 
     const pcfcontext = usePcfContext();
     // Custom Hook based on react-query
