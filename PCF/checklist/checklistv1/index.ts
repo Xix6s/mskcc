@@ -183,11 +183,17 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
 
                             options.forEach((option: any) => {
                                 console.log(option);
+                                option.entities.forEach((optionPiece: any) => {
+                                    console.log(optionPiece);
+                                    if (optionPiece._xix_question_value === question.xix_questionid) {
+                                        formHtml += `<input type="radio" name="` + optionPiece.xix_optionvalue + `" id="` + optionPiece.xix_questionoptionid + `">
+              <label for="` + optionPiece.xix_optionvalue + `">
+                ` + optionPiece.xix_optionlabel + `
+              </label>`;
+                                    }
+                                   
+                                });
 
-                                formHtml += `<input type="radio" name="` + option.xix_optionvalue + `" id="` + option.xix_questionoptionid + `">
-              <label for="` + option.xix_optionvalue + `">
-                ` + option.xix_optionlabel + `
-              </label>`
                             });
 
                             formHtml += `</div>`;
@@ -203,7 +209,10 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                                 console.log(option);
                                 option.entities.forEach((optionPiece: any) => {
                                     console.log(optionPiece);
-                                    formHtml += `<option value="` + optionPiece.xix_optionvalue + `">` + optionPiece.xix_optionvalue + `</option>`;
+                                    if (optionPiece._xix_question_value === question.xix_questionid) {
+                                        formHtml += `<option value="` + optionPiece.xix_optionlabel + `">` + optionPiece.xix_optionlabel + `</option>`;
+                                    }
+                                    
                                 });
                                 
 
@@ -214,7 +223,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
 
                         }
 
-                        //Check if it has no antecent question or question option
+                        //Check if it has no antecent question or question option,andd update visibility
                         //if (question._xix_antecedentoption_value || question._xix_antecedentquestion_value) {
                         //    console.log('ANTECEDENT record');
                         //    //formHtml += `<h1>` + associatedQuestions[i].entities[i].xix_questiontitle + `</h1>`;
