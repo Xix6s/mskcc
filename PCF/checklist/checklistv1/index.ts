@@ -145,7 +145,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         console.log(options);
 
 
-        let formHtml = '';
+        let formHtml = '<div style="text-align: center;padding: 50px;">';
         const sections = this._context.parameters.sampleDataSet.records;
 
         for (const key in sections) {
@@ -162,16 +162,40 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
             });
             console.log(associatedQuestions);
 
-            formHtml += `<h1>` + sectionTitle + `</h1>`;
+            formHtml += `<h1 style="background-color: lightgray;">` + sectionTitle + `</h1>`;
 
             for (var i = 0; i < associatedQuestions.length; i++) {
                 if (associatedQuestions[i]) {                   
                     console.log(associatedQuestions[i]);
                     associatedQuestions[i].entities.forEach((question: any) => {
                         console.log(question);
+                        let questionGuid = question.xix_questionid;
+                        let questionTitle = question.xix_questiontitle;
+                        let questionAddText = (question.xix_questionadditionaltext == null ? '' : question.xix_questionadditionaltext);
+                        let questionHintText = question.xix_questionhinttext;
+                        let questionAllowMultiselect = question.xix_allowmultiselect; //false/true
+                        let questionType = question.xix_questiontype;
+                        let questionRequired = question.xix_requiredquestion;
+                        let questionSortOrder = question.xix_sortorder;
+                        let questionAntecedentOption = question._xix_antecedentoption_value;
+                        let questionAntecedentQuestion = question._xix_antecedentquestion_value;
+                        let questionTextResponse = (question.xix_textfieldresponse == null ? '' : question.xix_textfieldresponse);
+
+                        //HTML props
+                        let questionVisible = ''; //hidden
+
+                        //Check if it has no antecent question or question option,andd update visibility
+                        if (question._xix_antecedentoption_value || question._xix_antecedentquestion_value) {
+                            console.log('ANTECEDENT record');
+                            questionVisible = 'hidden';
+                            //formHtml += `<h1>` + associatedQuestions[i].entities[i].xix_questiontitle + `</h1>`;
+                        }
+                        
+                        //Question Div
+                        formHtml += `<div id="question-` + questionGuid + `" style="padding: 10px;" ` + questionVisible + ` >`;
 
                         //Question headers
-                        formHtml += `<h1>` + question.xix_questiontitle + `</h1>`;
+                        formHtml += `<h3>` + questionTitle + `</h3>`;
                         /*formHtml += `<h3>` + question.xix_questiontitle + `</h3>`;*/
 
 
@@ -179,14 +203,14 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                         //Radio
                         if (question.xix_questiontype === 596810001) {
                             //let choices = 
-                            formHtml += `<div class="form-check">`;
+                            formHtml += `<div style="padding: 10px;" class="form-check">`;
 
                             options.forEach((option: any) => {
                                 console.log(option);
                                 option.entities.forEach((optionPiece: any) => {
                                     console.log(optionPiece);
-                                    if (optionPiece._xix_question_value === question.xix_questionid) {
-                                        formHtml += `<input type="radio" name="` + optionPiece.xix_optionvalue + `" id="` + optionPiece.xix_questionoptionid + `">
+                                    if (optionPiece._xix_question_value === questionGuid) {
+                                        formHtml += `<input type="radio" name="` + questionGuid + `" id="` + optionPiece.xix_questionoptionid + `">
               <label for="` + optionPiece.xix_optionvalue + `">
                 ` + optionPiece.xix_optionlabel + `
               </label>`;
@@ -203,37 +227,43 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                         //Drop-down
                         if (question.xix_questiontype === 596810000) {
                             //let choices = 
-                            formHtml += `<label for="options">Select...</label><select name="options" id="options">`;
+                            formHtml += `<div style="padding: 10px;"><label for="` + questionGuid + `">Select...</label></br><select name="` + questionGuid + `" id="` + questionGuid + `">`;
 
                             options.forEach((option: any) => {
                                 console.log(option);
                                 option.entities.forEach((optionPiece: any) => {
                                     console.log(optionPiece);
-                                    if (optionPiece._xix_question_value === question.xix_questionid) {
+                                    if (optionPiece._xix_question_value === questionGuid) {
                                         formHtml += `<option value="` + optionPiece.xix_optionlabel + `">` + optionPiece.xix_optionlabel + `</option>`;
                                     }
                                     
                                 });
                                 
 
-                                formHtml += `</select>`;
+                                //formHtml += `</select>`;
                             });
 
-                            formHtml += `</div>`;
+                            formHtml += `</select></div>`;
 
                         }
 
-                        //Check if it has no antecent question or question option,andd update visibility
-                        //if (question._xix_antecedentoption_value || question._xix_antecedentquestion_value) {
-                        //    console.log('ANTECEDENT record');
-                        //    //formHtml += `<h1>` + associatedQuestions[i].entities[i].xix_questiontitle + `</h1>`;
-                        //}
+                        //Text Area
+                        if (question.xix_questiontype === 596810003) {
+                            //let choices = 
+                            formHtml += `<div style="padding: 10px;"><textarea class="form-control" id="` + questionGuid + `" rows="3">` + questionTextResponse + `</textarea></div>`;
+                          
 
+                        }
+
+                        
+
+
+                        formHtml += `</div>`;
+                        
 
                     });
 
-                   
-                    
+                                      
                 }
                 
             }
@@ -242,10 +272,17 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
             
         }
         
+        //Buttons
+        formHtml += `<div><button onclick="this.OnSubmit(evt)" type="button">Submit</button></div>`;
+        formHtml += `</div>`;
 
         this._container.innerHTML = formHtml;
 
 
+    }
+
+    private async OnSubmit(evt: any) {
+        console.log(evt);
     }
 
 }
