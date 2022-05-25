@@ -2,11 +2,11 @@
 import { initializeIcons } from '@fluentui/react';
 import * as React from 'react';
 import { QueryCache, QueryClient, QueryClientProvider } from 'react-query';
-import { PcfContextProvider } from '../services/PcfContext';
-import { IPcfContextServiceProps, PcfContextService } from '../services/PcfContextService';
 //import { CheckList } from '../components/CheckList';
+import { useItems } from '../hooks/useItems';
 
 import { Stack } from '@fluentui/react/lib/Stack';
+import { Text, ITextProps } from '@fluentui/react/lib/Text';
 
 type Dataset = ComponentFramework.PropertyTypes.DataSet;
 
@@ -26,6 +26,7 @@ const queryClient = new QueryClient({
     }
 });
 
+//Props, Class Porperties
 export interface ICheckListProps {
     dataset: Dataset;
     util: ComponentFramework.Utility;
@@ -33,21 +34,18 @@ export interface ICheckListProps {
 };
 
 // eslint-disable-next-line no-undef
-export const CheckListApp = React.memo(function CheckList({
-    dataset,
-    util,
-    isTemplate
-}: ICheckListProps): JSX.Element {
-
+export const CheckListApp = (props: ICheckListProps): JSX.Element => {
+    console.log(props.dataset);
+    //const { items } = useItems(dataset);
 
     return (
         <Stack>
+            <Text>Section</Text>
+            
 
         </Stack>
     );
 
-}, (prevProps, newProps) => {
-    return prevProps.dataset === newProps.dataset
-});
+};
     
     
