@@ -18,6 +18,8 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     private _context: ComponentFramework.Context<IInputs>;
     private _container: HTMLDivElement;
     private _formContainer: HTMLElement;
+    private _submitButton: HTMLButtonElement;
+
     //private _appprops: ICheckListProps;
 
     /**
@@ -273,11 +275,25 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         }
         
         //Buttons
-        formHtml += `<div><button onclick="this.OnSubmit(evt)" type="button">Submit</button></div>`;
+        //formHtml += `<div><button onclick="this.OnSubmit(evt)" type="button">Submit</button></div>`;
         formHtml += `</div>`;
 
         this._container.innerHTML = formHtml;
+        this._submitButton = this.createSubmitButton('Submit', this.OnSubmit.bind(this));
+        this._container.appendChild(this._submitButton);
 
+
+    }
+
+    private createSubmitButton(buttonLabel: string, onClickHandler: (event?: any) => void): HTMLButtonElement {
+
+        const button: HTMLButtonElement = document.createElement("button");
+        button.innerHTML = buttonLabel;
+
+        //button.id = someid
+        //button.classList.add('someclass');
+        button.addEventListener('click', onClickHandler);
+        return button;
 
     }
 
