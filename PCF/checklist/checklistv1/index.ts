@@ -66,6 +66,9 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         //);
 
         const sections = this._context.parameters.sampleDataSet.records;
+        let pageParams = this._context as any;
+        const checkList = await this.retrieveChecklist(pageParams.page.entityId);
+        console.log(checkList);
 
         const questionsResponse = await this.retrieveQuestions(sections);
         //console.log(questionsResponse);
@@ -73,7 +76,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         //console.log(optionsResponse);
 
 
-        this.renderCheckList(questionsResponse, optionsResponse);
+        this.renderCheckList(questionsResponse, optionsResponse, checkList);
     }
 
     /**
@@ -94,6 +97,21 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     public destroy(): void {
         // Add code to cleanup control if necessary
         ReactDOM.unmountComponentAtNode(this._container);
+    }
+
+    private async retrieveChecklist(guid: any) {
+        console.log('retrieveChecklist-------------------');
+
+        //let request = `?$filter=(xix_checklistid eq ` + guid + `)`;
+
+        const response = await this._context.webAPI.retrieveRecord("xix_checklist", guid);
+        //console.log(response);
+
+
+        if (response) {
+            return response;
+        }
+        return null;
     }
 
     private async retrieveQuestions(sections: any) {
@@ -141,14 +159,28 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     
     }
 
-    private async renderCheckList(questions: any, options: any) {
+    private async renderCheckList(questions: any, options: any, checklist: any) {
         console.log('renderCheckList---------------');
         console.log(questions);
         console.log(options);
 
+        //Checklist params
+        const checklistGuid = checklist.xix_checklistid;
+        const checklistTitle = checklist.xix_checklistname;
+        const checklistTemplate = checklist.xix_istemplate; //false/true
+        const checklistState = checklist.statecode; //0/1
+        const checklistStatus = checklist.statuscode;
+        const checklistAddText = checklist.xix_checklistadditionaltext;
 
-        let formHtml = '<div style="text-align: center;padding: 50px;">';
+
+        let formHtml = '<form><div style="text-align: center;padding: 50px;">';
         const sections = this._context.parameters.sampleDataSet.records;
+
+        //disable inputs based on checklist status
+        let disableControl = '';
+        if (checklistState === 0) {
+            disableControl = 'disabled';
+        }
 
         for (const key in sections) {
 
@@ -212,7 +244,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                                 option.entities.forEach((optionPiece: any) => {
                                     console.log(optionPiece);
                                     if (optionPiece._xix_question_value === questionGuid) {
-                                        formHtml += `<input type="radio" name="` + questionGuid + `" id="` + optionPiece.xix_questionoptionid + `">
+                                        formHtml += `<input type="radio" name="` + questionGuid + `" id="` + optionPiece.xix_questionoptionid + `" ` + disableControl +`>
               <label for="` + optionPiece.xix_optionvalue + `">
                 ` + optionPiece.xix_optionlabel + `
               </label>`;
@@ -229,7 +261,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                         //Drop-down
                         if (question.xix_questiontype === 596810000) {
                             //let choices = 
-                            formHtml += `<div style="padding: 10px;"><label for="` + questionGuid + `">Select...</label></br><select name="` + questionGuid + `" id="` + questionGuid + `">`;
+                            formHtml += `<div style="padding: 10px;"><label for="` + questionGuid + `">Select...</label></br><select name="` + questionGuid + `" id="` + questionGuid + `" ` + disableControl +`>`;
 
                             options.forEach((option: any) => {
                                 console.log(option);
@@ -252,7 +284,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                         //Text Area
                         if (question.xix_questiontype === 596810003) {
                             //let choices = 
-                            formHtml += `<div style="padding: 10px;"><textarea class="form-control" id="` + questionGuid + `" rows="3">` + questionTextResponse + `</textarea></div>`;
+                            formHtml += `<div style="padding: 10px;"><textarea class="form-control" id="` + questionGuid + `" rows="3" ` + disableControl +`>` + questionTextResponse + `</textarea></div>`;
                           
 
                         }
@@ -276,7 +308,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         
         //Buttons
         //formHtml += `<div><button onclick="this.OnSubmit(evt)" type="button">Submit</button></div>`;
-        formHtml += `</div>`;
+        formHtml += `</div></form>`;
 
         this._container.innerHTML = formHtml;
         this._submitButton = this.createSubmitButton('Submit', this.OnSubmit.bind(this));
@@ -289,6 +321,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
 
         const button: HTMLButtonElement = document.createElement("button");
         button.innerHTML = buttonLabel;
+        
 
         //button.id = someid
         //button.classList.add('someclass');
