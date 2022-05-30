@@ -17,8 +17,9 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     private _notifyOutputChanged: () => void;
     private _context: ComponentFramework.Context<IInputs>;
     private _container: HTMLDivElement;
-    private _formContainer: HTMLElement;
+    private _sectionDiv: HTMLDivElement;
     private _submitButton: HTMLButtonElement;
+    
 
     //private _appprops: ICheckListProps;
 
@@ -42,10 +43,8 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         this._notifyOutputChanged = notifyOutputChanged;
         this._context = context;
         this._container = container;
-        context.mode.trackContainerResize(true);
-        //this._formContainer = new HTMLDivElement();
-        //this._formContainer.innerHTML = '';
-        //this.renderCheckList(context);
+        //context.mode.trackContainerResize(true);
+
     }
 
     /**
@@ -56,7 +55,6 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         console.log('updateView---------------------');
 
         //this._appprops.dataset = context.parameters.sampleDataSet;
-        ////Is this only a Template? **CHANGE THE HARD CODE
         //this._appprops.isTemplate = false;
         //this._appprops.util = context.utils;
         //// RENDER React Component
@@ -65,17 +63,20 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         //    this._container
         //);
 
+
+        //Application Begins here
+        //Get all sections from the Grid
         const sections = this._context.parameters.sampleDataSet.records;
         let pageParams = this._context as any;
+        //Get all properties of the current checklist record, only name and Guid are sent by framework
         const checkList = await this.retrieveChecklist(pageParams.page.entityId);
-        console.log(checkList);
-
+        //Get all Questions related to the sections
         const questionsResponse = await this.retrieveQuestions(sections);
-        //console.log(questionsResponse);
+        //Get all question Options related to the Questions
         const optionsResponse = await this.retrieveQuestionOptions(questionsResponse);
-        //console.log(optionsResponse);
 
 
+        //Render Checlist Form
         this.renderCheckList(questionsResponse, optionsResponse, checkList);
     }
 
@@ -101,11 +102,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
 
     private async retrieveChecklist(guid: any) {
         console.log('retrieveChecklist-------------------');
-
-        //let request = `?$filter=(xix_checklistid eq ` + guid + `)`;
-
         const response = await this._context.webAPI.retrieveRecord("xix_checklist", guid);
-        //console.log(response);
 
 
         if (response) {
@@ -116,7 +113,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
 
     private async retrieveQuestions(sections: any) {
         console.log('retrieveQuestions-------------------');
-        //console.log(sections);
+
         let requestArray = [] as any;
         for (const key in sections) {
 
@@ -126,7 +123,6 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         }
 
         const response = await Promise.all(requestArray);
-        //console.log(response);
 
         
         if (response) {
@@ -137,7 +133,6 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
 
     private async retrieveQuestionOptions(questions: any) {
         console.log('retrieveQuestionOptions-------------------');
-        //console.log(questions);
 
         let requestArray = [] as any;
         for (var i = 0; i < questions.length; i++) {
@@ -150,7 +145,6 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         }
 
         const response = await Promise.all(requestArray);
-        //console.log(response);
         if (response) {
 
             return response;
@@ -161,8 +155,8 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
 
     private async renderCheckList(questions: any, options: any, checklist: any) {
         console.log('renderCheckList---------------');
-        console.log(questions);
-        console.log(options);
+        //console.log(questions);
+        //console.log(options);
 
         //Checklist params
         const checklistGuid = checklist.xix_checklistid;
@@ -173,17 +167,22 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         const checklistAddText = checklist.xix_checklistadditionaltext;
 
 
-        let formHtml = '<form><div style="text-align: center;padding: 50px;">';
+        //Create Form Div
         const sections = this._context.parameters.sampleDataSet.records;
+        let formDiv = document.createElement('div');
+        formDiv.style.textAlign = 'center';
+        formDiv.style.padding = '50px';       
+        //console.log(sections);
 
-        //disable inputs based on checklist status
-        let disableControl = '';
-        if (checklistState === 0) {
-            disableControl = 'disabled';
-        }
+        //Check the State of Checlist Record and update properties
+        let formState = (checklistState == 1 ? true : false);
+        let currentSectionDiv = document.createElement('div');
+        currentSectionDiv.id = 'MSKCC-TopDiv';
+        formDiv.appendChild(currentSectionDiv);
 
+        //Create Question Divs and controls
         for (const key in sections) {
-
+            //For each Section Record Loop questions
             let currentSection = sections[key] as any;
             console.log(currentSection);
             const sectionGuid = currentSection._record.identifier.id.guid;
@@ -196,13 +195,17 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
             });
             console.log(associatedQuestions);
 
-            formHtml += `<h1 style="background-color: lightgray;">` + sectionTitle + `</h1>`;
+            //Create Section Div
+            let currentSectionHeader = document.createElement('h1');
+            currentSectionHeader.innerHTML = sectionTitle;
+            currentSectionHeader.style.backgroundColor = 'lightgray';
 
-            for (var i = 0; i < associatedQuestions.length; i++) {
-                if (associatedQuestions[i]) {                   
-                    console.log(associatedQuestions[i]);
-                    associatedQuestions[i].entities.forEach((question: any) => {
-                        console.log(question);
+
+            currentSectionDiv.appendChild(currentSectionHeader);
+            //If the current Section has Questions develop disaplay
+              if (associatedQuestions[0]) {                   
+                    associatedQuestions[0].entities.forEach((question: any) => {
+                        //console.log(question);
                         let questionGuid = question.xix_questionid;
                         let questionTitle = question.xix_questiontitle;
                         let questionAddText = (question.xix_questionadditionaltext == null ? '' : question.xix_questionadditionaltext);
@@ -216,111 +219,151 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                         let questionTextResponse = (question.xix_textfieldresponse == null ? '' : question.xix_textfieldresponse);
 
                         //HTML props
-                        let questionVisible = ''; //hidden
+                        let questionVisible = 'visible'; //hidden
 
                         //Check if it has no antecent question or question option,andd update visibility
                         if (question._xix_antecedentoption_value || question._xix_antecedentquestion_value) {
                             console.log('ANTECEDENT record');
                             questionVisible = 'hidden';
-                            //formHtml += `<h1>` + associatedQuestions[i].entities[i].xix_questiontitle + `</h1>`;
+
                         }
                         
                         //Question Div
-                        formHtml += `<div id="question-` + questionGuid + `" style="padding: 10px;" ` + questionVisible + ` >`;
-
-                        //Question headers
-                        formHtml += `<h3>` + questionTitle + `</h3>`;
-                        /*formHtml += `<h3>` + question.xix_questiontitle + `</h3>`;*/
+                        let questionDiv = document.createElement('div');
+                        questionDiv.id = questionGuid;
+                        questionDiv.innerHTML = questionTitle;
+                        questionDiv.className = 'question';
+                        questionDiv.style.padding = '10px';
+                        //Hide/Show Div
+                        questionDiv.style.visibility = questionVisible;
 
 
                         //create question component per question type
                         //Radio
                         if (question.xix_questiontype === 596810001) {
-                            //let choices = 
-                            formHtml += `<div style="padding: 10px;" class="form-check">`;
+                            let choicesDiv = document.createElement('div');
+                            
 
                             options.forEach((option: any) => {
-                                console.log(option);
                                 option.entities.forEach((optionPiece: any) => {
                                     console.log(optionPiece);
                                     if (optionPiece._xix_question_value === questionGuid) {
-                                        formHtml += `<input type="radio" name="` + questionGuid + `" id="` + optionPiece.xix_questionoptionid + `" ` + disableControl +`>
-              <label for="` + optionPiece.xix_optionvalue + `">
-                ` + optionPiece.xix_optionlabel + `
-              </label>`;
+
+                                        let choicesControl = document.createElement('input');
+                                        choicesControl.type = 'radio';
+                                        choicesControl.name = questionGuid;
+                                        choicesControl.id = questionGuid;
+                                        choicesDiv.appendChild(choicesControl);
+                                        choicesControl.disabled = formState;
+                                        //The question will have antecedent so add the guid at the control level
+                                        if (question.xix_dependencyguids) {
+                                            let dependencyAttr = document.createAttribute('data-dependency');
+                                            dependencyAttr.value = question.xix_dependencyguids;
+                                            choicesControl.attributes.setNamedItem(dependencyAttr);
+                                        }
+                                        
+                                        //Control Event
+                                        choicesControl.addEventListener('click', this.OnItemSelectionRadio.bind(this));
+
+                                        //If dependency is at the Option level at the dependency here
+                                        let choicesControlLabel = document.createElement('label');
+                                        choicesControlLabel.innerHTML = optionPiece.xix_optionlabel;
+
+                                        choicesDiv.appendChild(choicesControlLabel);
                                     }
                                    
                                 });
 
                             });
 
-                            formHtml += `</div>`;
+
+                            questionDiv.appendChild(choicesDiv);
+                            currentSectionDiv.appendChild(questionDiv);
 
                         }
 
                         //Drop-down
                         if (question.xix_questiontype === 596810000) {
-                            //let choices = 
-                            formHtml += `<div style="padding: 10px;"><label for="` + questionGuid + `">Select...</label></br><select name="` + questionGuid + `" id="` + questionGuid + `" ` + disableControl +`>`;
+                            let dropdownDiv = document.createElement('div');
+                            let dropdownControl = document.createElement('select');
+                            dropdownControl.disabled = formState;
+                            //The question will have antecedent so add the guid at the control level
+                            if (question.xix_dependencyguids) {
+                                let dependencyAttr = document.createAttribute('data-dependency');
+                                dependencyAttr.value = question.xix_dependencyguids;
+                                dropdownControl.attributes.setNamedItem(dependencyAttr);
+                            }
+                            dropdownControl.addEventListener('click', this.OnItemSelectionDropdown.bind(this));
 
                             options.forEach((option: any) => {
-                                console.log(option);
                                 option.entities.forEach((optionPiece: any) => {
-                                    console.log(optionPiece);
                                     if (optionPiece._xix_question_value === questionGuid) {
-                                        formHtml += `<option value="` + optionPiece.xix_optionlabel + `">` + optionPiece.xix_optionlabel + `</option>`;
+                                        let controlOption = document.createElement('option');
+                                        controlOption.value = optionPiece.xix_optionlabel;
+                                        controlOption.text = optionPiece.xix_optionlabel;
+                                        //If dependency is at the Option level at the dependency here
+                                        dropdownControl.add(controlOption);
                                     }
                                     
                                 });
-                                
 
-                                //formHtml += `</select>`;
                             });
 
-                            formHtml += `</select></div>`;
+                            dropdownDiv.appendChild(dropdownControl);
+                            questionDiv.appendChild(dropdownDiv)
+                            currentSectionDiv.appendChild(questionDiv);
 
                         }
 
                         //Text Area
                         if (question.xix_questiontype === 596810003) {
-                            //let choices = 
-                            formHtml += `<div style="padding: 10px;"><textarea class="form-control" id="` + questionGuid + `" rows="3" ` + disableControl +`>` + questionTextResponse + `</textarea></div>`;
+                            let textareaDiv = document.createElement('div');
+                            let textareaControl = document.createElement('textarea');
+                            textareaControl.id = questionGuid;
+                            textareaControl.innerHTML = questionTextResponse;
+                            textareaControl.rows = 4;
+                            textareaControl.disabled = formState;
+                            //The question will have antecedent so add the guid at the control level
+                            if (question.xix_dependencyguids) {
+                                let dependencyAttr = document.createAttribute('data-dependency');
+                                dependencyAttr.value = question.xix_dependencyguids;
+                                textareaControl.attributes.setNamedItem(dependencyAttr);
+                            }
+                            textareaControl.addEventListener('click', this.OnItemSelectionTextarea.bind(this));
+
+                            textareaDiv.appendChild(textareaControl);
+                            questionDiv.appendChild(textareaDiv);
+                            currentSectionDiv.appendChild(questionDiv);
+
                           
 
                         }
-
-                        
-
-
-                        formHtml += `</div>`;
-                        
+                                                                 
 
                     });
-
                                       
-                }
+              }
                 
-            }
-            
-
-            
         }
-        
-        //Buttons
-        //formHtml += `<div><button onclick="this.OnSubmit(evt)" type="button">Submit</button></div>`;
-        formHtml += `</div></form>`;
 
-        this._container.innerHTML = formHtml;
-        this._submitButton = this.createSubmitButton('Submit', this.OnSubmit.bind(this));
+        
+        //Buttons div
+        this._container.appendChild(formDiv);
+        this._submitButton = this.createSubmitButton('Submit', formState, this.OnSubmit.bind(this));
         this._container.appendChild(this._submitButton);
 
 
     }
 
-    private createSubmitButton(buttonLabel: string, onClickHandler: (event?: any) => void): HTMLButtonElement {
+
+
+    private createSubmitButton(buttonLabel: string, buttonState: boolean, onClickHandler: (event?: any) => void): HTMLButtonElement {
 
         const button: HTMLButtonElement = document.createElement("button");
         button.innerHTML = buttonLabel;
+        button.disabled = buttonState;
+
+        
         
 
         //button.id = someid
@@ -330,8 +373,122 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
 
     }
 
+    private async OnItemSelectionDropdown(evt: any) {
+        console.log(evt);
+        console.log(evt.target);
+
+        //Check if we have Dependent questions
+        if (evt.srcElement.attributes.getNamedItem('data-dependency')) {
+            let dependentGuid = evt.srcElement.attributes.getNamedItem('data-dependency').nodeValue;
+            let hiddenEl = document.getElementById(dependentGuid);
+
+            if (hiddenEl) {
+                if (hiddenEl.style.visibility === 'hidden') {
+                    hiddenEl.style.visibility = 'visible';
+                }
+                else {
+                    hiddenEl.style.visibility = 'hidden';
+                }
+
+            }
+
+
+        }
+
+        //Implement handling of any events on Question selection
+
+    }
+
+    private async OnItemSelectionRadio(evt: any) {
+        console.log(evt);
+        console.log(evt.target); 
+
+
+        //Check if we have Dependent questions
+        if (evt.srcElement.attributes.getNamedItem('data-dependency')) {
+            let dependentGuid = evt.srcElement.attributes.getNamedItem('data-dependency').nodeValue;
+            let hiddenEl = document.getElementById(dependentGuid);
+
+            if (hiddenEl) {
+                if (hiddenEl.style.visibility === 'hidden') {
+                    hiddenEl.style.visibility = 'visible';
+                }
+                else {
+                    hiddenEl.style.visibility = 'hidden';
+                }
+                
+            }
+            
+
+        }
+
+        //Implement handling of any events on Question selection
+
+    }
+
+    private async OnItemSelectionTextarea(evt: any) {
+        console.log(evt);
+        console.log(evt.target); 
+
+        //Check if we have Dependent questions
+        if (evt.srcElement.attributes.getNamedItem('data-dependency')) {
+            let dependentGuid = evt.srcElement.attributes.getNamedItem('data-dependency').nodeValue;
+            let hiddenEl = document.getElementById(dependentGuid);
+
+            if (hiddenEl) {
+                if (hiddenEl.style.visibility === 'hidden') {
+                    hiddenEl.style.visibility = 'visible';
+                }
+                else {
+                    hiddenEl.style.visibility = 'hidden';
+                }
+
+            }
+
+
+        }
+
+        //Implement handling of any events on Question selection
+
+    }
+    //When the Submit Button is clicked
     private async OnSubmit(evt: any) {
         console.log(evt);
+
+        const formDiv = document.querySelector('#MSKCC-TopDiv');
+        const allQuestionsDivs = formDiv?.querySelectorAll('div.question');
+        console.log(allQuestionsDivs);
+        let questionsArray = [] as any;
+
+        //For all Question Divs get guids and details
+        allQuestionsDivs?.forEach((question: any) => {
+            questionsArray.push(question.id);
+
+            //Get the properties from the child controls, these represent the question Options if there are any
+            //TODO: Need to implement update of all properties and options if exists
+
+        });
+
+        console.log(questionsArray);
+
+        this.updateRecords(questionsArray);
+
     }
+
+    private async updateRecords(questions: any) {
+        console.log(questions);
+
+        //Check if question has options, create method for handling options
+        for (var i = 0; i < questions.length; i++) {
+
+            let entity = {} as any;
+            //entity.statecode = 1;
+            this._context.webAPI.updateRecord("xix_question", questions[i], entity);
+        }
+
+        //Set Checklist status = 1 and saverefresh
+
+    }
+
 
 }
