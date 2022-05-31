@@ -8,6 +8,8 @@ function onAntecedentSelection(executionContext) {
     let antecedentORecord = formContext.getAttribute('xix_antecedentoption');
     let recordGuid = null;
 
+
+    //Before completeting this add null checks and stuff
     if (antecedentQRecord.getValue()) {
         //add guid to dependent record question
 
