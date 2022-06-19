@@ -12,9 +12,29 @@ import { useRecords } from '../hooks/useRecord';
 
 initializeIcons();
 
+export interface IQuestionProps {
+    title: string;
+    state: string;
+    required: boolean;
+    order: number;
+    type: string;
+    antecedent: IQuestionProps;
+}
+
+export interface ISectionProps {
+    title: string;
+    state: string;
+    required: boolean;
+    order: number;
+    questions: IQuestionProps[];
+}
+
 
 export interface ICheckListProps {
-    value: string;
+    title: string;
+    template: boolean;
+    state: string;
+    sections: ISectionProps;
 
 };
 

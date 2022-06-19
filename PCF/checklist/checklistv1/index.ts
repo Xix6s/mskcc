@@ -19,6 +19,8 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     private _container: HTMLDivElement;
     private _sectionDiv: HTMLDivElement;
     private _submitButton: HTMLButtonElement;
+    private _answerJson: any[];
+    private _checkListGuid: string;
     
 
     //private _appprops: ICheckListProps;
@@ -43,6 +45,8 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         this._notifyOutputChanged = notifyOutputChanged;
         this._context = context;
         this._container = container;
+        this._answerJson = [];
+        this._checkListGuid = '';
         //context.mode.trackContainerResize(true);
 
     }
@@ -159,6 +163,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         //console.log(options);
 
         //Checklist params
+        this._checkListGuid = checklist.xix_checklistid;
         const checklistGuid = checklist.xix_checklistid;
         const checklistTitle = checklist.xix_checklistname;
         const checklistTemplate = checklist.xix_istemplate; //false/true
@@ -251,8 +256,11 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
 
                                         let choicesControl = document.createElement('input');
                                         choicesControl.type = 'radio';
-                                        choicesControl.name = questionGuid;
+                                        choicesControl.name = optionPiece.xix_questionoptionid;
                                         choicesControl.id = questionGuid;
+                                        if (optionPiece.xix_selected == true) {
+                                            choicesControl.checked = true;
+                                        }
                                         choicesDiv.appendChild(choicesControl);
                                         choicesControl.disabled = formState;
                                         //The question will have antecedent so add the guid at the control level
@@ -263,10 +271,11 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                                         }
                                         
                                         //Control Event
-                                        choicesControl.addEventListener('click', this.OnItemSelectionRadio.bind(this));
+                                        choicesControl.addEventListener('change', this.OnItemSelectionRadio.bind(this));
 
                                         //If dependency is at the Option level at the dependency here
                                         let choicesControlLabel = document.createElement('label');
+                                        choicesControlLabel.id = optionPiece.xix_optionvalue;
                                         choicesControlLabel.innerHTML = optionPiece.xix_optionlabel;
 
                                         choicesDiv.appendChild(choicesControlLabel);
@@ -286,6 +295,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                         if (question.xix_questiontype === 596810000) {
                             let dropdownDiv = document.createElement('div');
                             let dropdownControl = document.createElement('select');
+                            dropdownControl.id = questionGuid;
                             dropdownControl.disabled = formState;
                             //The question will have antecedent so add the guid at the control level
                             if (question.xix_dependencyguids) {
@@ -293,14 +303,18 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                                 dependencyAttr.value = question.xix_dependencyguids;
                                 dropdownControl.attributes.setNamedItem(dependencyAttr);
                             }
-                            dropdownControl.addEventListener('click', this.OnItemSelectionDropdown.bind(this));
+                            dropdownControl.addEventListener('change', this.OnItemSelectionDropdown.bind(this));
 
                             options.forEach((option: any) => {
                                 option.entities.forEach((optionPiece: any) => {
                                     if (optionPiece._xix_question_value === questionGuid) {
                                         let controlOption = document.createElement('option');
-                                        controlOption.value = optionPiece.xix_optionlabel;
+                                        controlOption.value = optionPiece.xix_optionvalue;
                                         controlOption.text = optionPiece.xix_optionlabel;
+                                        controlOption.id = optionPiece.xix_questionoptionid;
+                                        if (optionPiece.xix_selected == true) {
+                                            controlOption.selected = true;
+                                        }
                                         //If dependency is at the Option level at the dependency here
                                         dropdownControl.add(controlOption);
                                     }
@@ -329,7 +343,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                                 dependencyAttr.value = question.xix_dependencyguids;
                                 textareaControl.attributes.setNamedItem(dependencyAttr);
                             }
-                            textareaControl.addEventListener('click', this.OnItemSelectionTextarea.bind(this));
+                            textareaControl.addEventListener('change', this.OnItemSelectionTextarea.bind(this));
 
                             textareaDiv.appendChild(textareaControl);
                             questionDiv.appendChild(textareaDiv);
@@ -376,6 +390,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     private async OnItemSelectionDropdown(evt: any) {
         console.log(evt);
         console.log(evt.target);
+        
 
         //Check if we have Dependent questions
         if (evt.srcElement.attributes.getNamedItem('data-dependency')) {
@@ -396,7 +411,21 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         }
 
         //Implement handling of any events on Question selection
-
+        //Get Question GUID from Question Div
+        //Get Selected item Value and Guid for question option record
+        let questionGuid = evt.target.id;
+        let questionDependencyGuid = null;
+        if (evt.target.dataset.dependency) {
+            questionDependencyGuid = evt.target.dataset.dependency;
+        }
+        let questionOptionGuid = evt.target.selectedOptions.item(0).id;
+        let questionOptionValue = evt.target.selectedOptions.item(0).value;
+        let obj = {} as any;
+        obj.questionGuid = questionGuid;
+        obj.questionDependency = questionDependencyGuid;
+        obj.questionoptionId = questionOptionGuid;
+        obj.questionoptionValue = questionOptionValue;
+        this._answerJson.push(obj);
     }
 
     private async OnItemSelectionRadio(evt: any) {
@@ -423,6 +452,21 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         }
 
         //Implement handling of any events on Question selection
+        //Get Question GUID from Question Div
+        //Get Selected item Value and Guid for question option record
+        let questionGuid = evt.target.id;
+        let questionDependencyGuid = null;
+        if (evt.target.dataset.dependency) {
+            questionDependencyGuid = evt.target.dataset.dependency;
+        }
+        let questionOptionGuid = evt.target.name;//questionGuid
+        let questionOptionValue = evt.target.nextElementSibling.id;//questionOption Guid
+        let obj = {} as any;
+        obj.questionGuid = questionGuid;
+        obj.questionDependency = questionDependencyGuid;
+        obj.questionoptionId = questionOptionGuid;
+        obj.questionoptionValue = questionOptionValue;
+        this._answerJson.push(obj);
 
     }
 
@@ -449,29 +493,70 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         }
 
         //Implement handling of any events on Question selection
+        //Get Question GUID from Question Div
+        //Get text from textarea and update
+        let questionGuid = evt.target.id;
+        let questionDependencyGuid = null;
+        if (evt.target.dataset.dependency) {
+            questionDependencyGuid = evt.target.dataset.dependency;
+        }
+
+        let questionTextValue = evt.target.value;//questionOption Guid
+        let obj = {} as any;
+        obj.questionGuid = questionGuid;
+        obj.questionDependency = questionDependencyGuid;
+        obj.questionText = questionTextValue;
+        this._answerJson.push(obj);
 
     }
     //When the Submit Button is clicked
     private async OnSubmit(evt: any) {
         console.log(evt);
 
-        const formDiv = document.querySelector('#MSKCC-TopDiv');
-        const allQuestionsDivs = formDiv?.querySelectorAll('div.question');
-        console.log(allQuestionsDivs);
-        let questionsArray = [] as any;
+        //const formDiv = document.querySelector('#MSKCC-TopDiv');
+        //const allQuestionsDivs = formDiv?.querySelectorAll('div.question');
+        //console.log(allQuestionsDivs);
+        //let questionsArray = [] as any;
 
-        //For all Question Divs get guids and details
-        allQuestionsDivs?.forEach((question: any) => {
-            questionsArray.push(question.id);
+        ////For all Question Divs get guids and details
+        //allQuestionsDivs?.forEach((question: any) => {
+        //    questionsArray.push(question.id);
 
-            //Get the properties from the child controls, these represent the question Options if there are any
-            //TODO: Need to implement update of all properties and options if exists
+        //    //Get the properties from the child controls, these represent the question Options if there are any
+        //    //TODO: Need to implement update of all properties and options if exists
 
-        });
+        //});
 
-        console.log(questionsArray);
+        //console.log(questionsArray);
 
-        this.updateRecords(questionsArray);
+        if (this._answerJson && this._answerJson.length > 0) {
+            //for every question update the record
+            for (var i = 0; i < this._answerJson.length; i++) {
+
+                let question = {} as any;
+                //question.statecode = 1;
+                if (this._answerJson[i].questionText) {
+                    question.xix_textfieldresponse = this._answerJson[i].questionText;
+                }
+                this._context.webAPI.updateRecord("xix_question", this._answerJson[i].questionGuid, question);
+                //Check for Question Options
+                if (this._answerJson[i].questionoptionId) {
+                    let questionOption = {} as any;
+                    questionOption.xix_selected = true;
+                    questionOption.xix_optionvalue = this._answerJson[i].questionoptionValue;
+                    this._context.webAPI.updateRecord("xix_questionoption", this._answerJson[i].questionoptionId, questionOption);
+                }
+            }
+
+            //update current checklist to inactive and refresh page
+            let checklist = {} as any;
+            checklist.statecode = 1;
+            this._context.webAPI.updateRecord("xix_checklist", this._checkListGuid, checklist);
+
+
+        }
+
+        //this.updateRecords(questionsArray);
 
     }
 
@@ -483,7 +568,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
 
             let entity = {} as any;
             //entity.statecode = 1;
-            this._context.webAPI.updateRecord("xix_question", questions[i], entity);
+            this._context.webAPI.updateRecord("xix_checklist", questions[i], entity);
         }
 
         //Set Checklist status = 1 and saverefresh
