@@ -247,6 +247,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                         //Radio
                         if (question.xix_questiontype === 596810001) {
                             let choicesDiv = document.createElement('div');
+                            //choicesDiv.id = questionGuid;
                             
 
                             options.forEach((option: any) => {
@@ -256,8 +257,10 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
 
                                         let choicesControl = document.createElement('input');
                                         choicesControl.type = 'radio';
-                                        choicesControl.name = optionPiece.xix_questionoptionid;
-                                        choicesControl.id = questionGuid;
+                                        choicesControl.name = questionGuid;
+                                        
+
+                                        choicesControl.id = optionPiece.xix_questionoptionid;
                                         if (optionPiece.xix_selected == true) {
                                             choicesControl.checked = true;
                                         }
@@ -420,12 +423,32 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         }
         let questionOptionGuid = evt.target.selectedOptions.item(0).id;
         let questionOptionValue = evt.target.selectedOptions.item(0).value;
+
+        let allOptions = evt.path[1].children.item(0).options;//all dropdown options html
+        let optionsToRemove = [] as any;
+        if (this._answerJson.length > 0) {
+            for (let i = 0; i < allOptions.length; i++) {
+                let currentOption = allOptions[i];
+                if (currentOption.tagName === 'OPTION') {
+                    if (questionOptionGuid !== currentOption.id) {
+                        optionsToRemove.push(currentOption.id);
+                        this._answerJson = this._answerJson.filter((x: any) => {
+                            return x.questionoptionId !== currentOption.id;
+                        });
+                    }
+
+                }
+            }
+        }
+
         let obj = {} as any;
         obj.questionGuid = questionGuid;
         obj.questionDependency = questionDependencyGuid;
         obj.questionoptionId = questionOptionGuid;
         obj.questionoptionValue = questionOptionValue;
+        obj.optionsToRemove = optionsToRemove;
         this._answerJson.push(obj);
+        console.log(this._answerJson);
     }
 
     private async OnItemSelectionRadio(evt: any) {
@@ -454,18 +477,37 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         //Implement handling of any events on Question selection
         //Get Question GUID from Question Div
         //Get Selected item Value and Guid for question option record
-        let questionGuid = evt.target.id;
+        let questionGuid = evt.target.name;
         let questionDependencyGuid = null;
         if (evt.target.dataset.dependency) {
             questionDependencyGuid = evt.target.dataset.dependency;
         }
-        let questionOptionGuid = evt.target.name;//questionGuid
+        let questionOptionGuid = evt.target.id;//questionGuid
         let questionOptionValue = evt.target.nextElementSibling.id;//questionOption Guid
+
+        let allOptions = evt.path[1].children;
+        let optionsToRemove = [] as any;
+        if (this._answerJson.length > 0) {
+            for (let i = 0; i < allOptions.length; i++) {
+                let currentOption = evt.path[1].children.item(i);
+                if (currentOption.tagName === 'INPUT') {
+                    if (questionOptionGuid !== evt.path[1].children.item(i).id) {
+                        optionsToRemove.push(evt.path[1].children.item(i).id);
+                        this._answerJson = this._answerJson.filter((x: any) => {
+                            return x.questionoptionId !== evt.path[1].children.item(i).id;
+                        });
+                    }                  
+                    
+                }
+            }                  
+        }
+        
         let obj = {} as any;
         obj.questionGuid = questionGuid;
         obj.questionDependency = questionDependencyGuid;
         obj.questionoptionId = questionOptionGuid;
         obj.questionoptionValue = questionOptionValue;
+        obj.optionsToRemove = optionsToRemove;
         this._answerJson.push(obj);
 
     }
@@ -495,6 +537,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         //Implement handling of any events on Question selection
         //Get Question GUID from Question Div
         //Get text from textarea and update
+
         let questionGuid = evt.target.id;
         let questionDependencyGuid = null;
         if (evt.target.dataset.dependency) {
@@ -511,24 +554,8 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     }
     //When the Submit Button is clicked
     private async OnSubmit(evt: any) {
-        console.log(evt);
 
-        //const formDiv = document.querySelector('#MSKCC-TopDiv');
-        //const allQuestionsDivs = formDiv?.querySelectorAll('div.question');
-        //console.log(allQuestionsDivs);
-        //let questionsArray = [] as any;
-
-        ////For all Question Divs get guids and details
-        //allQuestionsDivs?.forEach((question: any) => {
-        //    questionsArray.push(question.id);
-
-        //    //Get the properties from the child controls, these represent the question Options if there are any
-        //    //TODO: Need to implement update of all properties and options if exists
-
-        //});
-
-        //console.log(questionsArray);
-
+        //Check the answer object, if null don't process
         if (this._answerJson && this._answerJson.length > 0) {
             //for every question update the record
             for (var i = 0; i < this._answerJson.length; i++) {
@@ -552,28 +579,12 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
             let checklist = {} as any;
             checklist.statecode = 1;
             this._context.webAPI.updateRecord("xix_checklist", this._checkListGuid, checklist);
-
+            //Refresh Page
+            this.updateView(this._context);
 
         }
 
-        //this.updateRecords(questionsArray);
 
     }
-
-    private async updateRecords(questions: any) {
-        console.log(questions);
-
-        //Check if question has options, create method for handling options
-        for (var i = 0; i < questions.length; i++) {
-
-            let entity = {} as any;
-            //entity.statecode = 1;
-            this._context.webAPI.updateRecord("xix_checklist", questions[i], entity);
-        }
-
-        //Set Checklist status = 1 and saverefresh
-
-    }
-
 
 }
