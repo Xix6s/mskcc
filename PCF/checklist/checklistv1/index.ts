@@ -255,7 +255,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                         let questionVisible = 'visible'; //hidden
 
                         //Check if it has no antecent question or question option,andd update visibility
-                        if (question._xix_antecedentoption_value || question._xix_antecedentquestion_value) {
+                        if ((question._xix_antecedentoption_value || question._xix_antecedentquestion_value) && checklistState === 0) {
                             console.log('ANTECEDENT record');
                             questionVisible = 'hidden';
 
