@@ -5,6 +5,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 //FLUENTUI
 import { initializeIcons } from '@fluentui/react/lib/Icons';
+//import { error } from "console";
 
 //CUSTOM
 //import { CheckListApp, ICheckListProps } from './components/CheckListApp';
@@ -12,6 +13,44 @@ import { initializeIcons } from '@fluentui/react/lib/Icons';
 
 type DataSet = ComponentFramework.PropertyTypes.DataSet;
 initializeIcons(undefined, { disableWarnings: true });
+
+interface IQuestionProps {
+    title: string;
+    questionId: string;
+    state: string;
+    required: boolean;
+    order: number;
+    type: string;
+    questionOptionGuid: string;
+    questionOptionValue: string;
+    optionsToRemove: [];
+    antecedent: IQuestionProps;
+}
+interface IQuestionOptionProps {
+    title: string;
+    optionGuid: string;
+    state: string;
+    dependencyGuids: string;
+    order: number;
+    type: string;
+    optionLabel: string;
+    optionValue: string;
+    selected: boolean;
+    questionGuid: string;
+}
+
+enum ChecklistState {
+    Active,
+    Inactive
+}
+
+interface ICheckListProps {
+    title: string;
+    guid: string;
+    state: ChecklistState;
+    template: boolean;
+    questions: IQuestionProps;
+}
 
 export class checklistv1 implements ComponentFramework.StandardControl<IInputs, IOutputs> {
     private _notifyOutputChanged: () => void;
@@ -105,7 +144,6 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     }
 
     private async retrieveChecklist(guid: any) {
-        console.log('retrieveChecklist-------------------');
         const response = await this._context.webAPI.retrieveRecord("xix_checklist", guid);
 
 
@@ -116,8 +154,6 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     }
 
     private async retrieveQuestions(sections: any) {
-        console.log('retrieveQuestions-------------------');
-
         let requestArray = [] as any;
         for (const key in sections) {
 
@@ -136,8 +172,6 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     }
 
     private async retrieveQuestionOptions(questions: any) {
-        console.log('retrieveQuestionOptions-------------------');
-
         let requestArray = [] as any;
         for (var i = 0; i < questions.length; i++) {
             let currentQuestionSection = questions[i];
@@ -158,9 +192,6 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     }
 
     private async renderCheckList(questions: any, options: any, checklist: any) {
-        console.log('renderCheckList---------------');
-        //console.log(questions);
-        //console.log(options);
 
         //Checklist params
         this._checkListGuid = checklist.xix_checklistid;
@@ -177,7 +208,6 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         let formDiv = document.createElement('div');
         formDiv.style.textAlign = 'center';
         formDiv.style.padding = '50px';       
-        //console.log(sections);
 
         //Check the State of Checlist Record and update properties
         let formState = (checklistState == 1 ? true : false);
@@ -189,7 +219,6 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         for (const key in sections) {
             //For each Section Record Loop questions
             let currentSection = sections[key] as any;
-            console.log(currentSection);
             const sectionGuid = currentSection._record.identifier.id.guid;
             const sectionTitle = currentSection._record.fields.xix_checklistsectiontitle.value;
             const sectionRequired = currentSection._record.fields.xix_requiredsection.label; //YES/NO
@@ -198,7 +227,6 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
             const associatedQuestions = questions.filter((question: any) => {
                 if (question.entities[0]._xix_checklistsection_value === sectionGuid) return question;
             });
-            console.log(associatedQuestions);
 
             //Create Section Div
             let currentSectionHeader = document.createElement('h1');
@@ -246,13 +274,10 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                         //create question component per question type
                         //Radio
                         if (question.xix_questiontype === 596810001) {
-                            let choicesDiv = document.createElement('div');
-                            //choicesDiv.id = questionGuid;
-                            
-
+                            let choicesDiv = document.createElement('div');                           
+                            //Question Options
                             options.forEach((option: any) => {
                                 option.entities.forEach((optionPiece: any) => {
-                                    console.log(optionPiece);
                                     if (optionPiece._xix_question_value === questionGuid) {
 
                                         let choicesControl = document.createElement('input');
@@ -288,10 +313,8 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
 
                             });
 
-
                             questionDiv.appendChild(choicesDiv);
                             currentSectionDiv.appendChild(questionDiv);
-
                         }
 
                         //Drop-down
@@ -351,9 +374,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                             textareaDiv.appendChild(textareaControl);
                             questionDiv.appendChild(textareaDiv);
                             currentSectionDiv.appendChild(questionDiv);
-
-                          
-
+                       
                         }
                                                                  
 
@@ -362,13 +383,11 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
               }
                 
         }
-
-        
+       
         //Buttons div
         this._container.appendChild(formDiv);
         this._submitButton = this.createSubmitButton('Submit', formState, this.OnSubmit.bind(this));
         this._container.appendChild(this._submitButton);
-
 
     }
 
@@ -379,22 +398,15 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         const button: HTMLButtonElement = document.createElement("button");
         button.innerHTML = buttonLabel;
         button.disabled = buttonState;
+        button.style.marginLeft = '50%';
 
-        
-        
-
-        //button.id = someid
-        //button.classList.add('someclass');
         button.addEventListener('click', onClickHandler);
         return button;
 
     }
 
     private async OnItemSelectionDropdown(evt: any) {
-        console.log(evt);
-        console.log(evt.target);
         
-
         //Check if we have Dependent questions
         if (evt.srcElement.attributes.getNamedItem('data-dependency')) {
             let dependentGuid = evt.srcElement.attributes.getNamedItem('data-dependency').nodeValue;
@@ -448,13 +460,9 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         obj.questionoptionValue = questionOptionValue;
         obj.optionsToRemove = optionsToRemove;
         this._answerJson.push(obj);
-        console.log(this._answerJson);
     }
 
     private async OnItemSelectionRadio(evt: any) {
-        console.log(evt);
-        console.log(evt.target); 
-
 
         //Check if we have Dependent questions
         if (evt.srcElement.attributes.getNamedItem('data-dependency')) {
@@ -501,7 +509,10 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                 }
             }                  
         }
-        
+
+        //let questionToAdd: IQuestionProps;
+        //questionToAdd.questionId = questionGuid;
+
         let obj = {} as any;
         obj.questionGuid = questionGuid;
         obj.questionDependency = questionDependencyGuid;
@@ -513,8 +524,6 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
     }
 
     private async OnItemSelectionTextarea(evt: any) {
-        console.log(evt);
-        console.log(evt.target); 
 
         //Check if we have Dependent questions
         if (evt.srcElement.attributes.getNamedItem('data-dependency')) {
@@ -557,33 +566,55 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
 
         //Check the answer object, if null don't process
         if (this._answerJson && this._answerJson.length > 0) {
-            //for every question update the record
-            for (var i = 0; i < this._answerJson.length; i++) {
+            this._context.navigation.openConfirmDialog(
+                { title: "Submit Survey", text: "Are you sure you want to Submit?" },
+                { height: 200, width: 450 }
+            ).then((success) => {
+                if (success.confirmed) {
+                    //Run the Process
+                    //for every question update the record
+                    
+                    for (var i = 0; i < this._answerJson.length; i++) {
 
-                let question = {} as any;
-                //question.statecode = 1;
-                if (this._answerJson[i].questionText) {
-                    question.xix_textfieldresponse = this._answerJson[i].questionText;
-                }
-                this._context.webAPI.updateRecord("xix_question", this._answerJson[i].questionGuid, question);
-                //Check for Question Options
-                if (this._answerJson[i].questionoptionId) {
-                    let questionOption = {} as any;
-                    questionOption.xix_selected = true;
-                    questionOption.xix_optionvalue = this._answerJson[i].questionoptionValue;
-                    this._context.webAPI.updateRecord("xix_questionoption", this._answerJson[i].questionoptionId, questionOption);
-                }
-            }
+                        let question = {} as any;
+                        //question.statecode = 1;
+                        if (this._answerJson[i].questionText) {
+                            question.xix_textfieldresponse = this._answerJson[i].questionText;
+                        }
+                        this._context.webAPI.updateRecord("xix_question", this._answerJson[i].questionGuid, question);
+                        //Check for Question Options
+                        if (this._answerJson[i].questionoptionId) {
+                            let questionOption = {} as any;
+                            questionOption.xix_selected = true;
+                            questionOption.xix_optionvalue = this._answerJson[i].questionoptionValue;
+                            this._context.webAPI.updateRecord("xix_questionoption", this._answerJson[i].questionoptionId, questionOption);
+                        }
+                    }
 
-            //update current checklist to inactive and refresh page
-            let checklist = {} as any;
-            checklist.statecode = 1;
-            this._context.webAPI.updateRecord("xix_checklist", this._checkListGuid, checklist);
-            //Refresh Page
-            this.updateView(this._context);
+                    //update current checklist to inactive and refresh page
+                    let checklist = {} as any;
+                    checklist.statecode = 1;
+                    this._context.webAPI.updateRecord("xix_checklist", this._checkListGuid, checklist).then((success) => {
+                        //Refresh Page
+                        this._context.navigation.openForm({
+                            entityName: "xix_checklist",
+                            entityId: this._checkListGuid
+                        });
+                    },
+                        (error) => {
+                            console.log(error);
+                        }
+
+                    );
+                    
+
+                }
+                else {
+                    console.log('Nothing happens');
+                }
+            });
 
         }
-
 
     }
 
