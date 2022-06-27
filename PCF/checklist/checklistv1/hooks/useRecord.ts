@@ -3,24 +3,24 @@
 import { useQuery } from 'react-query';
 import { usePcfContext } from '../services/PcfContext';
 import { useLookupViewFetchXml } from './useLookupViewFetchXml';
-import { useMetadata } from './useMetadata';
 
 
 export const useRecords = () => {
 
     const pcfcontext = usePcfContext()
-    //console.log(pcfcontext);
-    const { primaryname, primaryimage } = useMetadata(pcfcontext.lookupentityname)
-    const { fetchxml } = useLookupViewFetchXml()
+    console.log(pcfcontext);
+    //const { fetchxml } = useLookupViewFetchXml()
 
+    //const { data, isLoading, isError } =
+    //    useQuery<ComponentFramework.WebApi.Entity[], Error>(
+    //        ['lookuprecords', pcfcontext.instanceid],
+    //        () => pcfcontext,
+    //        {
+    //            enabled: Boolean(primaryname) && Boolean(fetchxml),
+    //            staleTime: Infinity
+    //        }
+    //    )
 
-
-}
-
-export const useRecordsAsOptions = () => {
-    const pcfcontext = usePcfContext()
-
-    const { primaryid, primaryname, primaryimage } = useMetadata(pcfcontext.lookupentityname)
-
+    //return { records: data, isLoading, isError }
 
 }

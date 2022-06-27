@@ -1,9 +1,16 @@
 /* eslint-disable no-use-before-define */
+import { initializeIcons } from '@fluentui/react';
 import * as React from 'react';
 import { QueryCache, QueryClient, QueryClientProvider } from 'react-query';
-import { PcfContextProvider } from '../services/PcfContext';
-import { IPcfContextServiceProps, PcfContextService } from '../services/PcfContextService';
-import { CheckList } from '../components/CheckList';
+//import { CheckList } from '../components/CheckList';
+import { useItems } from '../hooks/useItems';
+
+import { Stack } from '@fluentui/react/lib/Stack';
+import { Text, ITextProps } from '@fluentui/react/lib/Text';
+
+type Dataset = ComponentFramework.PropertyTypes.DataSet;
+
+initializeIcons();
 
 
 // declare outside of FC element so it doesnt gets evaluated at each rerenders
@@ -19,37 +26,26 @@ const queryClient = new QueryClient({
     }
 });
 
+////Props, Class Porperties
+//export interface ICheckListProps {
+//    dataset: Dataset;
+//    util: ComponentFramework.Utility;
+//    isTemplate: boolean;
+//};
+
 // eslint-disable-next-line no-undef
-const CheckListApp = (props: IPcfContextServiceProps): JSX.Element => {
-    const pcfcontextservice = new PcfContextService(props)
+export const CheckListApp = (): JSX.Element => {
 
-
-    const entitySelectHandler = (item: any): void => {
-        //console.log("entitySelectHandler-------------------");
-        //this.setState({ value: item.searchValue });
-        //props.onResult(item.searchValue);
-
-    }
-
-
-    const onChangeHandler = (item?: string): void => {
-        //console.log("onChangeHandler-------------------");
-        //props.onChange(item);
-    }
-
-
+    //const { items } = useItems(dataset);
 
     return (
-        <QueryClientProvider client={queryClient} contextSharing={true}>
-            <PcfContextProvider pcfcontext={pcfcontextservice}>
-                    <CheckList                                            
+        <Stack>
+            <Text>Section</Text>
+            
 
+        </Stack>
+    );
 
-                    />
-
-            </PcfContextProvider>
-        </QueryClientProvider>
-    )
-}
-
-export default CheckListApp
+};
+    
+    
