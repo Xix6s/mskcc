@@ -26,16 +26,16 @@ const queryClient = new QueryClient({
     }
 });
 
-//Props, Class Porperties
-export interface ICheckListProps {
-    dataset: Dataset;
-    util: ComponentFramework.Utility;
-    isTemplate: boolean;
-};
+////Props, Class Porperties
+//export interface ICheckListProps {
+//    dataset: Dataset;
+//    util: ComponentFramework.Utility;
+//    isTemplate: boolean;
+//};
 
 // eslint-disable-next-line no-undef
-export const CheckListApp = (props: ICheckListProps): JSX.Element => {
-    console.log(props.dataset);
+export const CheckListApp = (): JSX.Element => {
+
     //const { items } = useItems(dataset);
 
     return (
