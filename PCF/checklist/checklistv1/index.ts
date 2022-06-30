@@ -5,7 +5,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 //FLUENTUI
 import { initializeIcons } from '@fluentui/react/lib/Icons';
-//import { error } from "console";
+
 
 //CUSTOM
 import { CheckList, ICheckListProps } from './components/CheckList';
@@ -18,8 +18,7 @@ initializeIcons(undefined, { disableWarnings: true });
 export class checklistv1 implements ComponentFramework.StandardControl<IInputs, IOutputs> {
     private _context: ComponentFramework.Context<IInputs>;
     private _container: HTMLDivElement;
-    private _submitButton: HTMLButtonElement;
-    private _answerJson: any[];
+
     private _checkListGuid: any;
 
 
@@ -66,7 +65,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
                 let properties: ICheckListProps = {} as ICheckListProps;
                 properties.guid = this._checkListGuid;
                 properties.pcfContext = this._context;
-
+                properties.onSubmit = this.onSubmit;
                 // RENDER React Component
                 ReactDOM.render(
                     React.createElement(CheckList, properties),
@@ -75,6 +74,11 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
 
             });
        
+    }
+
+    public onSubmit(event: any): void {
+        console.log('onSubmit------------------');
+        console.log(event);
     }
 
     /**
