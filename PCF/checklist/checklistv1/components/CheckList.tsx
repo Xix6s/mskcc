@@ -6,17 +6,15 @@ import { useState } from 'react'
 
 
 //FLUENT UI
-import { initializeIcons, ITheme, mergeStyleSets, getTheme, ICellStyleProps } from '@fluentui/react';
+import { initializeIcons, Panel } from '@fluentui/react';
 import { DefaultButton, PrimaryButton } from '@fluentui/react/lib/Button';
 import { ChoiceGroup, IChoiceGroupOption } from '@fluentui/react/lib/ChoiceGroup';
 import { Dropdown, DropdownMenuItemType, IDropdownStyles, IDropdownOption } from '@fluentui/react/lib/Dropdown';
 import { TextField } from '@fluentui/react/lib/TextField';
 import { Stack, IStackProps, IStackStyles } from '@fluentui/react/lib/Stack';
 import { Spinner } from '@fluentui/react/lib/Spinner';
-import { Dialog, DialogType, DialogFooter } from '@fluentui/react/lib/Dialog';
 
-
-
+import { useBoolean } from '@fluentui/react-hooks';
 import { IInputs } from '../generated/ManifestTypes';
 
 
@@ -26,30 +24,36 @@ initializeIcons();
 
 const dropdownStyles = { dropdown: { width: 300 } };
 
+
 export interface IQuestionProps {
     guid: string;
-    sectionGuid: string;
-    title: string;
-    state: string;
-    required: boolean;
-    order: number;
-    type: number;
-    responseText: string;
+    sectionGuid?: string;
+    title?: string;
+    state?: boolean | true;
+    required?: boolean;
+    order?: number;
+    type?: QuestionType;
+    responseText?: string;
     questionOptions?: IQuestionOptionsProps[];
-    antecedentQuestion: string;
-    antecendentOption: string;
+    antecedentQuestion?: string;
+    antecendentOption?: string;
+    dependencyGuid?: string;
+    dataFetched?: boolean | false;
+    hide?: boolean | true;
 }
 
 export interface IQuestionOptionsProps {
-    title: string;
-    questionGuid: string;
-    optionLabel: string;
-    optionValue: string;
-    order: number;
-    guid: string;
-    selected: boolean;
-    dependencyGuid: string;
-    state: string;
+    title?: string;
+    questionGuid?: string;
+    optionLabel?: string;
+    optionValue?: string;
+    order?: number;
+    guid?: string;
+    selected?: boolean;
+    dependencyGuid?: string;
+    state?: string;
+    dataFetched?: boolean | false;
+    hide?: boolean | true;
 }
 
 export interface ISectionProps {
@@ -59,99 +63,279 @@ export interface ISectionProps {
     required?: boolean;
     order?: number;
     questions?: IQuestionProps[];
-    dataFetched?: boolean;
+    dataFetched?: boolean | false;
 }
 
 
 export interface ICheckListProps {
     title?: string;
     guid: string;
-    template: boolean;
+    template: boolean | false;
     state: string;
     sections?: ISectionProps[];
     pcfContext: ComponentFramework.Context<IInputs>,
-    renderComplated: boolean | false;
-    onSubmit?: (evt: any) => void;
-    onCopy?: (evt: any) => void;
+    renderCompleted: boolean | false;
+    onSubmit: (evt: any) => void;
+    onCopyClicked: (evt: any) => void;
+    dataFetched?: boolean | false;
+    onItemChange?: (evt: any) => void;
 };
 
+enum QuestionType {
+    DropDown = 596810000,
+    Radio = 596810001,
+    TextArea = 596810003
+};
 
 
 
 export const CheckList = (props: ICheckListProps) => {
     console.log('CheckList--------------');
     console.log(props);
-    const [isCompleted, SetIsCompleted] = useState(false);
-    const [isTemplate, SetTemplates] = useState(false);
+    const [isChechlistCompleted, SetChecklistCompleted] = useState(false);
     const [CheckList, SetCheckList] = useState<ICheckListProps>();
     const [SectionList, SetSectionList] = useState<ISectionProps[]>();
     const [QuestionList, SetQuestionList] = useState<IQuestionProps[]>();
     const [QuestionOptionsList, SetQuestionOptionsList] = useState<IQuestionOptionsProps[]>();
-    const [isLoading, isError] = useState();
+    const [CopiesToMake, SetCopiesToMake] = useState(1);
     const [isChecklistTemplate, SetChecklistTemplate] = useState(false);
-    const [isCopyDialogShown, ShowCopyDialog] = useState(false);
+    const [isCopyDialogShown, { setTrue: openPanel, setFalse: dismissPanel }] = useBoolean(false);
+
+    const questionsToSubmit = React.useRef({} as IQuestionProps[]);
 
     React.useEffect(
         () => {
-            if (!CheckList) {//Populate all Checklist Field data
+            if (!CheckList?.dataFetched) {//Populate all Checklist Field data
                 getChecklistMetadata();
             }
-            if (!SectionList) {//Check if have built Section Object
-                setSections(); //If not build it
+            else if (CheckList.renderCompleted) {//We are done fetching data, implement final hooks before rendering
+
             }
             else {
+                if (!SectionList) {//Check if have built Section Object
+                    setSections(); //If not build it
+                }
                 if (!QuestionList) {//Check if we have built the Question object
                     getQuestions();
                 }
                 else if (!QuestionOptionsList) {//Get Options
                     getQuestionOptions();
                 }
-                else {//build object
-                    let _CheckList: ICheckListProps = {} as ICheckListProps;
-                    _CheckList.guid = props.guid;
-                    _CheckList.pcfContext = props.pcfContext;
+                else if (SectionList && QuestionList && QuestionOptionsList) {//build object
+
                     //Set Sections
 
-                    //let questionsF: IQuestionProps[] = [];
+                    let questionsF: IQuestionProps[] = [];
                     let sectionsF: ISectionProps[] = [];
                     //let questionOptionsF: IQuestionOptionsProps[] = [];
-                   SectionList.forEach((sec: ISectionProps, indx: number) => {
-                        console.log(sec);
-                        console.log(indx);
 
-                        sectionsF.push(sec);
-                        QuestionList.map((que: IQuestionProps, indx2: number) => {
-                            console.log(que);
-                            console.log(indx2);
+                    for (let j = 0; j < QuestionList.length; j++) {//For all questions
+                        let currQue = QuestionList[j];
 
-                            if (sec.guid = que.sectionGuid) {
-                                if (sectionsF[indx].questions === undefined) {
-                                    sectionsF[indx].questions = [] as IQuestionProps[];
+
+                        if (currQue.type !== QuestionType.TextArea) {//Only type without Options
+                            let questionOptionsF: IQuestionOptionsProps[] = [];
+                            for (let k = 0; k < QuestionOptionsList.length; k++) {//For all Options
+                                let currOpt = QuestionOptionsList[k];
+
+                                if (currQue.guid === currOpt.questionGuid) {
+
+                                    questionOptionsF.push(currOpt);
                                 }
-                                sectionsF[indx].questions?.push(que);
-                                
-                                return sectionsF;
+
                             }
+                            questionsF.push({
+                                sectionGuid: currQue?.sectionGuid,
+                                guid: currQue?.guid,
+                                state: currQue?.state,
+                                title: currQue?.title,
+                                order: currQue?.order,
+                                required: currQue?.required,
+                                antecedentQuestion: currQue?.antecedentQuestion,
+                                antecendentOption: currQue?.antecendentOption,
+                                responseText: currQue?.responseText,
+                                type: currQue?.type,
+                                dependencyGuid: currQue?.dependencyGuid,
+                                questionOptions: questionOptionsF
+                            });
+                        }
+                        else {
+                            questionsF.push(currQue);
+                        }
+
+
+
+                    }
+
+                    for (let i = 0; i < SectionList.length; i++) {
+                        let currSec = SectionList[i];
+                        let quePush: IQuestionProps[] = [];
+                        for (let j = 0; j < questionsF.length; j++) {
+                            let currQue = questionsF[j];
+
+                            if (currQue.sectionGuid === currSec.guid) {
+                                quePush.push(currQue);
+                            }
+
+                        }
+
+                        sectionsF.push({
+                            guid: currSec.guid,
+                            order: currSec.order,
+                            title: currSec.title,
+                            required: currSec.required,
+                            state: currSec.state,
+                            questions: quePush
                         });
+                    }
 
-                    });
+                    let _CheckList: ICheckListProps = {
+                        guid: props.guid,
+                        pcfContext: props.pcfContext,
+                        title: CheckList?.title,
+                        template: CheckList?.template ? CheckList?.template : false,
+                        state: CheckList?.state ? CheckList?.state : '0',
+                        renderCompleted: true,
+                        sections: sectionsF,
+                        dataFetched: true,
+                        onSubmit: OnChecklistSubmit.bind(this),
+                        onCopyClicked: OnChecklistCopy.bind(this),
+                        onItemChange: OnChecklistItemChange.bind(this)
+                    };
 
-                    console.log('mappedsections');
-                    console.log(sectionsF);
-                    console.log(_CheckList);
+                    SetCheckList(_CheckList);
+
+
                 }
             }
 
+
+        }
+    );
+
+    //Handle on Submit function
+    const OnChecklistSubmit = (event: any) => {
+        console.log('OnChecklistSubmit--------------------');
+        console.log(event);
+
+        props.pcfContext.navigation.openConfirmDialog(
+            { title: "Submit Survey", text: "Are you sure you want to Submit?" },
+            { height: 200, width: 450 }
+        )
+            .then((response: any) => {
+                console.log(response);
+
+                if (CheckList && CheckList.sections) {
+                    
+                    for (let i = 0; i < CheckList.sections.length; i++) {
+                        let currSec = CheckList.sections[i];
+                        if (currSec.questions) {//Check if we have questions
+                            for (let j = 0; j < currSec.questions.length; j++) {
+                                let questionsRequest = {} as any;
+                                
+                                let currQuestion = currSec.questions[j]
+                                questionsRequest.xix_textfieldresponse = currQuestion?.responseText;
+                                props.pcfContext.webAPI.updateRecord("xix_question", currQuestion.guid, questionsRequest);
+
+                                if (currQuestion.questionOptions?.length) {//Create options request package if we have options
+                                    let selected = currQuestion.questionOptions.find((op: IQuestionOptionsProps) => op.selected === true);
+                                    if (selected) {
+                                        let questionOption = {} as any;
+                                        questionOption.xix_selected = true;
+                                        questionOption.xix_optionvalue = selected.optionValue;
+                                        props.pcfContext.webAPI.updateRecord("xix_questionoption", selected.guid as string, questionOption);
+                                    }
+                                    
+                                }
+
+                            }
+
+                            //Update checklist
+                            let checklist = {} as any;
+                            checklist.statecode = 1;
+                            props.pcfContext.webAPI.updateRecord("xix_checklist", CheckList.guid, checklist).then((success) => {
+                                //Refresh Page
+                                props.pcfContext.navigation.openForm({
+                                    entityName: "xix_checklist",
+                                    entityId: CheckList.guid
+                                });
+                            },
+                                (error) => {
+                                    console.log(error);
+                                }
+
+                            );
+                        }
+
+                    }
+                }
+
+            });
+
+    };
+
+    //Handle the Copying, update number of copies to make on the form field and refresh form
+    const OnChecklistCopy = (event: any) => {
+        if (CheckList) {
+            let checkl = {} as any;
+            checkl.xix_copiestomake = CopiesToMake;
+            props.pcfContext.webAPI.updateRecord('xix_checklist', CheckList.guid, checkl)
+                .then((sucess: any) => {
+                    //Refresh page
+                    props.pcfContext.navigation.openForm({
+                        entityName: "xix_checklist",
+                        entityId: CheckList.guid
+                    });
+                });
+        }
+
+    };
+
+    //Handle on Change events of all form controls
+    const OnChecklistItemChange = (event: any, option?: any, index?: any) => {
+        console.log('OnChecklistItemChange--------------------');
+        console.log(event);
+
+        
+        if (CheckList) {
+            if (event.target.localName === 'textarea') {//This is a text area control
+                questionsToSubmit.current.push({
+                    guid: event.target.id,
+                    responseText: option
+                });
+
+            }
+            else {//This is a Radio or Dropdown control
+                console.log(option);
+                let opPush: IQuestionOptionsProps[] = []
+                if (option.data) {//there is a dependency guid get the dependent and set hide to false
+                    console.log(option);
+                }
+                opPush.push({
+                    guid: option.key,
+                    optionValue: option.selected
+                });
+
+                questionsToSubmit.current.push({
+                    guid: option.id,
+                    questionOptions: opPush
+                });
+
+                
+            }
             
         }
-    )
 
-    //Retrieve all records
-    const setSections = async () => {
-        console.log('FetchData----------------------');
-
-        let checklistSections = props.pcfContext.parameters.sampleDataSet.records;
         
+
+        
+        
+
+    };
+
+    //Get all Sections from the Checklist, this is in the Context Parameters
+    const setSections = async () => {
+        let checklistSections = props.pcfContext.parameters.sampleDataSet.records;      
         let secArray: ISectionProps[] = [];
         for (let sec in checklistSections) {
             console.log(sec);
@@ -163,22 +347,15 @@ export const CheckList = (props: ICheckListProps) => {
             secPush.title = currentSection._record.fields.xix_checklistsectiontitle.value;
             secPush.required = currentSection._record.fields.xix_requiredsection.label;
             secPush.state = currentSection._record.fields.statecode;
-            secArray.push(secPush);
-            
+            secArray.push(secPush);           
+        }        
 
-        }
-        if (secArray.length > 1) {
-            
-            SetSectionList(secArray);
-
-        }
-
-
+        SetSectionList(secArray);
 
     };
 
+    //Get all fields for the Checklist, here we can add more fields to build the object out.
     const getChecklistMetadata = async () => {
-        console.log('getChecklist---------------');
         
         props.pcfContext.webAPI.retrieveRecord("xix_checklist", props.guid)
             .then((item) => {
@@ -186,6 +363,7 @@ export const CheckList = (props: ICheckListProps) => {
                 checklist.state = item.statecode;
                 checklist.title = item.xix_checklistname;
                 checklist.template = item.xix_istemplate;
+                checklist.dataFetched = true;
                 SetCheckList(checklist);
                 SetChecklistTemplate(checklist.template);
                 
@@ -196,25 +374,27 @@ export const CheckList = (props: ICheckListProps) => {
             });
     };
 
-    //Get Questions method
+    //Fetch xml to get all question and set Question State
     const getQuestions = async () => {
-        console.log('getQuestions---------------');
-        let requestArray = [] as any;
         if (SectionList) {
+            let fetchXml = `<fetch>
+                              <entity name="xix_question">
+                                <filter type="or">`;
+
+
             for (const key in SectionList) {
-
-                let request = '?$filter=_xix_checklistsection_value eq ' + SectionList[key].guid;
-
-                requestArray.push(props.pcfContext.webAPI.retrieveMultipleRecords("xix_question", request));
+                fetchXml += `<condition attribute="xix_checklistsection" operator="eq" value="${SectionList[key].guid}" />`;
             }
+            fetchXml += `</filter>
+                              </entity>
+                            </fetch>`;
+            props.pcfContext.webAPI.retrieveMultipleRecords('xix_question', `?fetchXml=${fetchXml}`)
+                .then((response: ComponentFramework.WebApi.RetrieveMultipleResponse) => {
+                    if (response.entities.length > 0) {
 
-            Promise.all(requestArray)
-                .then((items: any) => {
-                    for (let i = 0; i < items.length; i++) {
-                        
                         let questionsList: IQuestionProps[] = [];
-                        for (let k = 0; k < items[i].entities.length; k++) {
-                            let currentSection = items[i].entities[k];
+                        for (let i = 0; i < response.entities.length; i++) {
+                            let currentSection = response.entities[i];
                             let question: IQuestionProps = {
                                 guid: currentSection?.xix_questionid,
                                 sectionGuid: currentSection?._xix_checklistsection_value,
@@ -225,179 +405,201 @@ export const CheckList = (props: ICheckListProps) => {
                                 type: currentSection?.xix_questiontype,
                                 responseText: currentSection?.xix_textfieldresponse,
                                 antecedentQuestion: currentSection?._xix_antecedentquestion_value,
-                                antecendentOption: currentSection?._xix_antecedentoption_value
+                                antecendentOption: currentSection?._xix_antecedentoption_value,
+                                dependencyGuid: currentSection?.xix_dependencyguids
                             }
                             questionsList.push(question);
-
                         }
+
                         SetQuestionList(questionsList);
 
+
                     }
-
-                })
-                .catch((err) => {
-                    console.log(err);
-
+                    else {//Set a Function for no questions found
+                        SetQuestionList([]);
+                    }
                 });
+
         }
-        
-    }
 
+    };
+
+    //Fetch xml to get all question options and set Options State
     const getQuestionOptions = async () => {
-        let requestArray = [] as any;
-        
         if (QuestionList) {
-            for (var i = 0; i < QuestionList.length; i++) {
-                let currentQuestionGuid = QuestionList[i].guid;
-                let request = '?$filter=_xix_question_value eq ' + currentQuestionGuid;
-                requestArray.push(props.pcfContext.webAPI.retrieveMultipleRecords("xix_questionoption", request));
+            let fetchXml = `<fetch>
+                              <entity name="xix_questionoption">
+                                <filter type="or">`;
 
+            for (var i = 0; i < QuestionList.length; i++) {
+
+                let currentQuestionGuid = QuestionList[i].guid;
+                fetchXml += `<condition attribute="xix_question" operator="eq" value="${currentQuestionGuid}" />`;
             }
 
-            Promise.all(requestArray)
-                .then((items: any) => {
-                    console.log(items);
-                    if (items.length > 0) {
-                        let questionOptions: IQuestionOptionsProps[] = [];
-                        for (let i = 0; i < items.length; i++) {
-                            let currentEntity = items[i];
-                            console.log(currentEntity);
-                            for (let k = 0; k < currentEntity.entities.length; k++) {
-                                let currentOptions = currentEntity.entities[k];
-                                console.log(currentOptions);
-                                questionOptions.push({
-                                    questionGuid: currentOptions._xix_question_value,
-                                    guid: currentOptions.xix_questionoptionid,
-                                    title: currentOptions.xix_questionoptiontitle,
-                                    state: currentOptions.statecode,
-                                    order: currentOptions.xix_order,
-                                    dependencyGuid: currentOptions.xix_dependencyguids,
-                                    optionLabel: currentOptions.xix_optionlabel,
-                                    optionValue: currentOptions.xix_optionvalue,
-                                    selected: currentOptions.xix_selected,
-                                    
-                            });
+            fetchXml += `</filter>
+                              </entity>
+                            </fetch>`;
+            props.pcfContext.webAPI.retrieveMultipleRecords('xix_questionoption', `?fetchXml=${fetchXml}`)
+                .then((response: ComponentFramework.WebApi.RetrieveMultipleResponse) => {
+                    if (response.entities.length > 0) {
+
+                        let questionsList: IQuestionOptionsProps[] = [];
+                        for (let i = 0; i < response.entities.length; i++) {
+                            let currentSection = response.entities[i];
+                            let question: IQuestionOptionsProps = {
+                                guid: currentSection?.xix_questionoptionid,
+                                questionGuid: currentSection?._xix_question_value,
+                                title: currentSection?.xix_questionoptiontitle,
+                                state: currentSection?.statecode,
+                                order: currentSection?.xix_sortorder,
+                                dependencyGuid: currentSection?.xix_dependencyguids,
+                                selected: currentSection?.xix_selected,
+                                optionLabel: currentSection.xix_optionlabel,
+                                optionValue: currentSection.xix_optionvalue,
 
                             }
-                            
-
+                            questionsList.push(question);
                         }
-                        SetQuestionOptionsList(questionOptions);
-                    }
-                    
-                    
 
-                    
-                })
-                .catch((err) => {
-                    console.log(err);
-                    return null;
+                        SetQuestionOptionsList(questionsList);
+                    }
+                    else {//Set a Function for no question options found
+                        SetQuestionOptionsList([]);
+                    }
                 });
         }
-        
 
-    }
+    };
 
-    const _onRadioChange = (ev: React.FormEvent<HTMLInputElement>) => {
-        console.dir(ev);
-    }
 
-    const _onSubmiteButton = (ev: React.FormEvent<HTMLInputElement>) => {
-        console.dir(ev);
-    }
+    //Method to Render Radio type
+    const RenderRadioOptions = (options: IQuestionOptionsProps[], que: IQuestionProps): JSX.Element => {
+        console.log(options);
+        let opToReturn = options.map((option: IQuestionOptionsProps): any => {
+            return {
+                key: option?.guid,//the option record guid
+                text: option?.optionLabel,
+                selected: option?.optionValue,
+                data:option?.dependencyGuid,
+                id: que?.guid,//the question guid
+            };
+        });
+        console.log('opToReturn--------------------');
+        console.log(opToReturn);
+        let selected = options.find((op: IQuestionOptionsProps) => op.selected === true);
+        console.log(selected);
+        return (
+            <ChoiceGroup
+                defaultSelectedKey={selected?.guid}
+                options={opToReturn}
+                onChange={(evt, option) => OnChecklistItemChange(evt, option)}
+                label={que.title}
+                required={que?.required}
+                data-dependency={que.antecedentQuestion}
+            />
+        );
+    };
 
-    const _onCopyButton = (ev: React.FormEvent<HTMLInputElement>): JSX.Element => {
-        console.dir(ev);
+    //Method to Render DropDown type
+    const RenderDropDownOptions = (options: IQuestionOptionsProps[], que: IQuestionProps): JSX.Element => {
+
+        let opToReturn = options.map((option: IQuestionOptionsProps): any => {
+            return {
+                key: option.guid,//the option record guid
+                text: option.optionLabel,
+                selected: option?.optionValue,
+                data: option?.dependencyGuid,
+                id: que?.guid,//the question guid              
+            };
+        });
+
 
         return (
-            
-            );
+            <Dropdown
+                label={que.title}
+                placeholder="Select"
+                ariaLabel="Select"
+                options={opToReturn}
+                required={que.required}
+                styles={dropdownStyles}
+                hidden={que.dependencyGuid && que.hide ? true : false}
+                disabled={isChechlistCompleted}
+                data-dependency={que.antecedentQuestion}
+                onChange={(evt, option, index) => OnChecklistItemChange(evt, option, index)}
+            />
+        );
+    };
 
-    }
-
-    const renderSections = (sections: ISectionProps[]): JSX.Element => {
-        console.log('renderSections----------------');
-        console.log(sections);
+    //Rendering of all Sections and children happens here
+    const renderSections = (): JSX.Element => {
 
         return (
             <Stack>
-                {sections.map((sec: ISectionProps) => (
+                {CheckList?.sections?.map((sec: ISectionProps) => (
                     <Stack>{sec.title}
                         {sec.questions != null && sec.questions.map((que: IQuestionProps) => (
-                            <Stack.Item>
-                                {que.title}
-                                {que.type === 596810000 && (//Drop-Down
-                                    <Dropdown
-                                        placeholder="Select"
-                                        ariaLabel="Required dropdown example"
-                                        options={[
-                                            { key: 'A', text: 'Option a', title: 'I am option a.' },
-                                            { key: 'B', text: 'Option b' },
-                                            { key: 'C', text: 'Option c', disabled: true },
-                                            { key: 'D', text: 'Option d' },
-                                            { key: 'E', text: 'Option e' },
-                                        ]}
-                                        required={que.required}
-                                        styles={dropdownStyles}
-                                    />
-                                    )}
-                                {que.type === 596810001 && (//Radio
-                                    <ChoiceGroup
-                                        defaultSelectedKey="B"
-                                        options={[
-                                            { key: 'A', text: 'Option A' },
-                                            { key: 'B', text: 'Option B' },
-                                            { key: 'C', text: 'Option C', disabled: true },
-                                            { key: 'D', text: 'Option D' },
-                                        ]}
-                                        //onChange={_onRadioChange}
-                                        label="Pick one"
-                                        required={que.required} />
-                                    )}
-                                {que.type === 596810003 && (//Textarea
+                            <Stack.Item order={que.order}>
+                                {que.type === QuestionType.DropDown
+                                    && que.questionOptions
+                                    && que.questionOptions.length > 0
+                                    && RenderDropDownOptions(que.questionOptions, que)
+                                }
+                                {que.type === QuestionType.Radio
+                                    && que.questionOptions
+                                    && que.questionOptions.length > 0
+                                    && RenderRadioOptions(que.questionOptions, que)
+                                }
+                                {que.type === QuestionType.TextArea && (//Textarea
                                     <TextField
-                                        label="Enter Text"
+                                        id={que.guid} //question guid
+                                        label={que.title}
                                         multiline={true}
-                                        // eslint-disable-next-line react/jsx-no-bind
-                                        //onChange={onChange}
+                                        defaultValue={que.responseText}
+                                        required={que.required}
+                                        onChange={(evt, newValue) => OnChecklistItemChange(evt, newValue)}
+                                        disabled={isChechlistCompleted}
+                                        hidden={que.dependencyGuid && que.hide ? true : false}
+                                        data={que.antecedentQuestion}
                                     />
-                                    )}
+                                )}
                             </Stack.Item>
 
-                        ))}                       
+                        ))}
                     </Stack>
-                ))}              
+                ))}
             </Stack>
 
-            );
-    }
+        );
+    };
 
 
     // MAIN RENDERING
-    console.log('MAIN RENDERING-------------------');
+    //While the Checklist Questions and Question Options have not been fetched, keep returning spinner.
+    //This should change to when the Checklist object is completed
 
 
-    if (!SectionList || !QuestionList || !QuestionOptionsList) {
+    if (!CheckList?.renderCompleted) {
         return <Spinner label="I am building your Checklist..." />;
     }
     else {
 
         return (
             <>
-                {QuestionList && SectionList && (
+                {CheckList.renderCompleted === true && (
                     <Stack horizontalAlign='center'>
-                        {renderSections(SectionList)}
+                        {renderSections()}
                         {isChecklistTemplate
                             ? <DefaultButton
                                 text="Copy"
-                                onClick={() => ShowCopyDialog(true)}
+                                onClick={openPanel}
                                 allowDisabledFocus
                                 disabled={false}
                                 //checked={checked}
                             />
-                            : <DefaultButton
+                            : <PrimaryButton
                                 text="Submit"
-                                onClick={() => _onSubmiteButton}
+                                onClick={(evt) => OnChecklistSubmit(evt)}
                                 allowDisabledFocus
                                 disabled={false}
                             //checked={checked}
@@ -405,12 +607,44 @@ export const CheckList = (props: ICheckListProps) => {
                             }
                     </Stack>
                 )}
-                {QuestionList.length <= 0 && (
+                {QuestionList && QuestionList.length <= 0 && (
                     <Stack><div>Please Add Sections</div></Stack>
                 )}
                 {isCopyDialogShown && (
-                    <div>add dialog</div>
-                    )}
+                    <div>
+                        <Panel
+                            isOpen={isCopyDialogShown}
+                            onDismiss={dismissPanel}
+                            headerText="Copy Checklist Template"
+                            closeButtonAriaLabel="Close"
+                            onRenderFooterContent={() => (
+                                <div>
+                                
+                                <PrimaryButton
+                                    text="Copy"
+                                    onClick={(evt) => OnChecklistCopy(evt)}
+                                    allowDisabledFocus
+                                    disabled={false}
+                                //checked={checked}
+                                    />
+                                    </div>
+                            )}
+                            // Stretch panel content to fill the available height so the footer is positioned
+                            // at the bottom of the page
+                            isFooterAtBottom={true}
+                        >
+                            <p>
+                                <TextField
+                                    label="Enter Number of Copies to Make:"
+                                    type="number"
+                                    width="50%"
+                                    required
+                                    onChange={(evt, amount: any) => { SetCopiesToMake(amount) }}
+                                />
+                            </p>
+                        </Panel>
+                    </div>
+                )}
                 
 
             </>
