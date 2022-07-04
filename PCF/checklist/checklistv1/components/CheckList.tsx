@@ -90,8 +90,6 @@ enum QuestionType {
 
 
 export const CheckList = (props: ICheckListProps) => {
-    console.log('CheckList--------------');
-    console.log(props);
     const [isChechlistCompleted, SetChecklistCompleted] = useState(false);
     const [CheckList, SetCheckList] = useState<ICheckListProps>();
     const [SectionList, SetSectionList] = useState<ISectionProps[]>();
@@ -207,16 +205,12 @@ export const CheckList = (props: ICheckListProps) => {
 
     //Handle on Submit function
     const OnChecklistSubmit = (event: any) => {
-        console.log('OnChecklistSubmit--------------------');
-        console.log(event);
-
         props.pcfContext.navigation.openConfirmDialog(
             { title: "Submit Survey", text: "Are you sure you want to Submit?" },
             { height: 200, width: 450 }
         )
             .then((response: any) => {
-                console.log(response);
-
+                //Check if there are questions to submit
                 if (questionsToSubmit.current.length > 0) {
                     for (let i = 0; i < questionsToSubmit.current.length; i++) {
                         let currQ = questionsToSubmit.current[i];
@@ -276,7 +270,7 @@ export const CheckList = (props: ICheckListProps) => {
     const OnChecklistCopy = (event: any) => {
         if (CheckList) {
             let checkl = {} as any;
-            checkl.xix_copiestomake = CopiesToMake;
+            checkl.xix_copiestomake = CopiesToMake; //We only set the number of copies and the Flow will handle the rest
             props.pcfContext.webAPI.updateRecord('xix_checklist', CheckList.guid, checkl)
                 .then((sucess: any) => {
                     //Refresh page
@@ -289,12 +283,10 @@ export const CheckList = (props: ICheckListProps) => {
 
     };
 
+
     //Handle on Change events of all form controls
     const OnChecklistItemChange = (event: any, option?: any, index?: any) => {
-        console.log('OnChecklistItemChange--------------------');
-        console.log(event);
-
-        
+        //Make sure our Global Checklist is not null
         if (CheckList) {
             if (event.target.localName === 'textarea') {//This is a text area control
                 questionsToSubmit.current.push({
@@ -304,11 +296,11 @@ export const CheckList = (props: ICheckListProps) => {
 
             }
             else {//This is a Radio or Dropdown control
-                console.log(option);
                 let opPush: IQuestionOptionsProps[] = []
                 if (option.data.dependencyGuid) {//there is a dependency guid get the dependent and set hide to false
+                    //Here we must update the SetChecklist so we can re-render the form with visible items
                     console.log('dependencyGuid--------------------');
-                    console.log(option.data.dependencyGuid);
+                    console.log(option.data.dependencyGuid); //look for this Guid under question or options and display/hide
                 }
                 opPush.push({
                     guid: option.key,
@@ -323,12 +315,7 @@ export const CheckList = (props: ICheckListProps) => {
                 
             }
             
-        }
-
-        
-
-        
-        
+        }   
 
     };
 
@@ -474,7 +461,7 @@ export const CheckList = (props: ICheckListProps) => {
 
     //Method to Render Radio type
     const RenderRadioOptions = (options: IQuestionOptionsProps[], que: IQuestionProps): JSX.Element => {
-        console.log(options);
+
         let opToReturn = options.map((option: IQuestionOptionsProps): any => {
             return {
                 key: option?.guid,//the option record guid
@@ -487,10 +474,9 @@ export const CheckList = (props: ICheckListProps) => {
                 id: que?.guid,//the question guid
             };
         });
-        console.log('opToReturn--------------------');
-        console.log(opToReturn);
+
         let selected = options.find((op: IQuestionOptionsProps) => op.selected === true);
-        console.log(selected);
+
         return (
             <ChoiceGroup
                 defaultSelectedKey={selected?.guid}
@@ -603,14 +589,12 @@ export const CheckList = (props: ICheckListProps) => {
                                 onClick={openPanel}
                                 allowDisabledFocus
                                 disabled={false}
-                                //checked={checked}
                             />
                             : <PrimaryButton
                                 text="Submit"
                                 onClick={(evt) => OnChecklistSubmit(evt)}
                                 allowDisabledFocus
                                 disabled={false}
-                            //checked={checked}
                             />
                             }
                     </Stack>
