@@ -1,9 +1,8 @@
 //Add to Question and Question Option form on the OnSave form Mthod
 
 function onAntecedentSelection(executionContext) {
-    console.log(executionContext);
     let formContext = executionContext.getFormContext();
-    let currentRecordGuid = formContext._entityReference ? formContext._entityReference.id.guid : null;
+    let currentRecordGuid = formContext._entityReference.id ? formContext._entityReference.id.guid : null;
     let antecedentQRecord = formContext.getAttribute('xix_antecedentquestion');
     let antecedentORecord = formContext.getAttribute('xix_antecedentoption');
     let recordGuid = null;
