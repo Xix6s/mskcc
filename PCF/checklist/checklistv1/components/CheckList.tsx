@@ -6,12 +6,12 @@ import { useState } from 'react'
 
 
 //FLUENT UI
-import { initializeIcons, Panel } from '@fluentui/react';
+import { Checkbox, initializeIcons, Label, Panel } from '@fluentui/react';
 import { DefaultButton, PrimaryButton } from '@fluentui/react/lib/Button';
 import { ChoiceGroup, IChoiceGroupOption } from '@fluentui/react/lib/ChoiceGroup';
 import { Dropdown, DropdownMenuItemType, IDropdownStyles, IDropdownOption } from '@fluentui/react/lib/Dropdown';
 import { TextField } from '@fluentui/react/lib/TextField';
-import { Stack, IStackProps, IStackStyles } from '@fluentui/react/lib/Stack';
+import { Stack, IStackProps, IStackStyles, StackItem } from '@fluentui/react/lib/Stack';
 import { Spinner } from '@fluentui/react/lib/Spinner';
 
 import { useBoolean } from '@fluentui/react-hooks';
@@ -84,7 +84,8 @@ export interface ICheckListProps {
 enum QuestionType {
     DropDown = 596810000,
     Radio = 596810001,
-    TextArea = 596810003
+    TextArea = 596810003,
+    Checkbox = 596810002
 };
 
 
@@ -122,81 +123,7 @@ export const CheckList = (props: ICheckListProps) => {
                 }
                 else if (SectionList && QuestionList && QuestionOptionsList) {//build object
                     //Here we build object that will be displayed
-                    let questionsF: IQuestionProps[] = [];
-                    let sectionsF: ISectionProps[] = [];
-
-                    for (let j = 0; j < QuestionList.length; j++) {//For all questions
-                        let currQue = QuestionList[j];
-                        if (currQue.type !== QuestionType.TextArea) {//Only type without Options
-                            let questionOptionsF: IQuestionOptionsProps[] = [];
-                            for (let k = 0; k < QuestionOptionsList.length; k++) {//For all Options
-                                let currOpt = QuestionOptionsList[k];
-
-                                if (currQue.guid === currOpt.questionGuid) {
-
-                                    questionOptionsF.push(currOpt);
-                                }
-
-                            }
-                            questionsF.push({
-                                sectionGuid: currQue?.sectionGuid,
-                                guid: currQue?.guid,
-                                state: currQue?.state,
-                                title: currQue?.title,
-                                order: currQue?.order,
-                                required: currQue?.required,
-                                antecedentQuestion: currQue?.antecedentQuestion,
-                                antecendentOption: currQue?.antecendentOption,
-                                responseText: currQue?.responseText,
-                                type: currQue?.type,
-                                dependencyGuid: currQue?.dependencyGuid,
-                                questionOptions: questionOptionsF
-                            });
-                        }
-                        else {//Text ARea type question
-                            questionsF.push(currQue);
-                        }
-
-                    }
-
-                    for (let i = 0; i < SectionList.length; i++) {
-                        let currSec = SectionList[i];
-                        let quePush: IQuestionProps[] = [];
-                        for (let j = 0; j < questionsF.length; j++) {
-                            let currQue = questionsF[j];
-
-                            if (currQue.sectionGuid === currSec.guid) {
-                                quePush.push(currQue);
-                            }
-
-                        }
-
-                        sectionsF.push({
-                            guid: currSec.guid,
-                            order: currSec.order,
-                            title: currSec.title,
-                            required: currSec.required,
-                            state: currSec.state,
-                            questions: quePush
-                        });
-                    }
-
-                    //Here is the Checklist that defines that UI
-                    let _CheckList: ICheckListProps = {
-                        guid: props.guid,
-                        pcfContext: props.pcfContext,
-                        title: CheckList?.title,
-                        template: CheckList?.template ? CheckList?.template : false,
-                        state: CheckList?.state ? CheckList?.state : '0',
-                        renderCompleted: true,
-                        sections: sectionsF,
-                        dataFetched: true,
-                        onSubmit: OnChecklistSubmit.bind(this),
-                        onCopyClicked: OnChecklistCopy.bind(this),
-                        onItemChange: OnChecklistItemChange.bind(this)
-                    };
-                    //Set it to rebuild the UI
-                    SetCheckList(_CheckList);
+                    ReBuildChecklist();
                 }
             }
 
@@ -318,9 +245,16 @@ export const CheckList = (props: ICheckListProps) => {
 
     //Handle on Change events of all form controls
     const OnChecklistItemChange = (event: any, option?: any, index?: any) => {
-        
+        console.log('OnChecklistItemChange--------------');
+        console.log(event);
+        console.log(option);
+        console.log(index);
         if (CheckList) {
             if (event.target.localName === 'textarea') {//This is a text area control
+                if (event.target.name) {//Check if we have a dependency guid  
+                    //event.target.localName contains the dependency guid if the question has one
+                    ReBuildChecklist({ type: 'option', guid: event.target.name });
+                }
                 questionsToSubmit.current.push({
                     guid: event.target.id,
                     responseText: option
@@ -336,6 +270,8 @@ export const CheckList = (props: ICheckListProps) => {
                 if (option.data.dependencyGuid) {//there is a dependency guid get the dependent and set hide to false
                     console.log('dependencyGuid--------------------');
                     console.log(option.data.dependencyGuid);
+
+                    ReBuildChecklist({ type: 'option', guid: option.data.dependencyGuid });
                 }
                 opPush.push({
                     guid: option.key,
@@ -351,6 +287,108 @@ export const CheckList = (props: ICheckListProps) => {
             }
             
         }   
+
+    };
+
+    const ReBuildChecklist = (dependencyObj?: any) => {
+        console.log('ReBuildChecklist--------------');
+        console.log(dependencyObj);
+        let questionsF: IQuestionProps[] = [];
+        let sectionsF: ISectionProps[] = [];
+
+        if (QuestionList && SectionList && QuestionOptionsList) {
+            for (let j = 0; j < QuestionList.length; j++) {//For all questions
+                let currQue = QuestionList[j];
+                if (currQue.type !== QuestionType.TextArea) {//Only type without Options
+                    let questionOptionsF: IQuestionOptionsProps[] = [];
+                    let hideQuestion = true;
+                    for (let k = 0; k < QuestionOptionsList.length; k++) {//For all Options
+                        let currOpt = QuestionOptionsList[k];                      
+
+                        if (currQue.guid === currOpt.questionGuid) {
+                            //make option visible if hidden set to false
+                            if (dependencyObj && dependencyObj.type === 'option') {//Check if it is an Option
+                                if (dependencyObj.guid === currOpt.questionGuid) {//check if the dependency GUID matches the current option GUID
+                                    currOpt.hide = false;
+                                    hideQuestion = false;
+                                }
+                            }
+                            console.log('optiontopush');
+                            console.log(currOpt);
+                            questionOptionsF.push(currOpt);
+                        }
+
+                    }
+                    questionsF.push({
+                        sectionGuid: currQue?.sectionGuid,
+                        guid: currQue?.guid,
+                        state: currQue?.state,
+                        title: currQue?.title,
+                        order: currQue?.order,
+                        required: currQue?.required,
+                        antecedentQuestion: currQue?.antecedentQuestion,
+                        antecendentOption: currQue?.antecendentOption,
+                        responseText: currQue?.responseText,
+                        type: currQue?.type,
+                        dependencyGuid: currQue?.dependencyGuid,
+                        questionOptions: questionOptionsF,
+                        hide: hideQuestion
+                    });
+                }
+                else {//Text ARea type question
+                    if (dependencyObj && dependencyObj.type === 'textarea') {//check for dependency questions
+                        if (dependencyObj.guid === currQue.guid) {
+                            currQue.hide = false;
+                        }
+                    }
+                    console.log('questiontopush');
+                    console.log(currQue);
+                    questionsF.push(currQue);
+                }
+
+            }
+
+            for (let i = 0; i < SectionList.length; i++) {
+                let currSec = SectionList[i];
+                let quePush: IQuestionProps[] = [];
+                for (let j = 0; j < questionsF.length; j++) {
+                    let currQue = questionsF[j];
+
+                    if (currQue.sectionGuid === currSec.guid) {
+                        quePush.push(currQue);
+                    }
+
+                }
+
+                sectionsF.push({
+                    guid: currSec.guid,
+                    order: currSec.order,
+                    title: currSec.title,
+                    required: currSec.required,
+                    state: currSec.state,
+                    questions: quePush
+                });
+            }
+
+            //Here is the Checklist that defines that UI
+            let _CheckList: ICheckListProps = {
+                guid: props.guid,
+                pcfContext: props.pcfContext,
+                title: CheckList?.title,
+                template: CheckList?.template ? CheckList?.template : false,
+                state: CheckList?.state ? CheckList?.state : '0',
+                renderCompleted: true,
+                sections: sectionsF,
+                dataFetched: true,
+                onSubmit: OnChecklistSubmit.bind(this),
+                onCopyClicked: OnChecklistCopy.bind(this),
+                onItemChange: OnChecklistItemChange.bind(this)
+            };
+            //Set it to rebuild the UI
+            SetCheckList(_CheckList);
+        }
+
+        
 
     };
 
@@ -492,6 +530,33 @@ export const CheckList = (props: ICheckListProps) => {
 
     };
 
+    //Method to Render Radio type
+    const RenderCheckboxOptions = (options: IQuestionOptionsProps[], que: IQuestionProps): JSX.Element => {
+        console.log(options);
+        
+
+        return (
+            <Stack hidden={que.dependencyGuid && que.hide ? true : false }>
+                <Label
+                    required={que.required}
+                >
+                    {que.title}
+                </Label>
+                {options.map((option: IQuestionOptionsProps) => (
+                    <Stack.Item order={que.order}>
+                    <Checkbox
+                        label={option.optionLabel}
+                        defaultChecked={option.selected}
+                        onChange={(evt, option) => OnChecklistItemChange(evt, option)}
+                        />
+                    </Stack.Item>
+                    ))}
+                
+            </Stack>
+            
+        );
+    };
+
 
     //Method to Render Radio type
     const RenderRadioOptions = (options: IQuestionOptionsProps[], que: IQuestionProps): JSX.Element => {
@@ -512,14 +577,16 @@ export const CheckList = (props: ICheckListProps) => {
         let selected = options.find((op: IQuestionOptionsProps) => op.selected === true);
 
         return (
+            <Stack.Item order={que.order} hidden={que.dependencyGuid && que.hide ? true : false}>
             <ChoiceGroup
                 defaultSelectedKey={selected?.guid}
                 options={opToReturn}
                 onChange={(evt, option) => OnChecklistItemChange(evt, option)}
                 label={que.title}
                 required={que?.required}
-                data-dependency={que.antecedentQuestion}
-            />
+                
+                />
+            </Stack.Item>
         );
     };
 
@@ -530,7 +597,7 @@ export const CheckList = (props: ICheckListProps) => {
             return {
                 key: option.guid,//the option record guid
                 text: option.optionLabel,
-                selected: option?.selected,
+                selected: option?.optionValue,
                 data: {
                     'dependencyGuid': option?.dependencyGuid,
                     'answer': option.optionValue
@@ -542,7 +609,7 @@ export const CheckList = (props: ICheckListProps) => {
 
         return (
             <Dropdown
-                label={que.title}
+                label={que.dependencyGuid && que.hide ? '' : que.title}
                 placeholder="Select"
                 ariaLabel="Select"
                 options={opToReturn}
@@ -575,6 +642,11 @@ export const CheckList = (props: ICheckListProps) => {
                                     && que.questionOptions.length > 0
                                     && RenderRadioOptions(que.questionOptions, que)
                                 }
+                                {que.type === QuestionType.Checkbox
+                                    && que.questionOptions
+                                    && que.questionOptions.length > 0
+                                    && RenderCheckboxOptions(que.questionOptions, que)
+                                }
                                 {que.type === QuestionType.TextArea && (//Textarea
                                     <TextField
                                         id={que.guid} //question guid
@@ -582,10 +654,10 @@ export const CheckList = (props: ICheckListProps) => {
                                         multiline={true}
                                         defaultValue={que.responseText}
                                         required={que.required}
-                                        onChange={(evt, newValue) => OnChecklistItemChange(evt, newValue)}
+                                        onChange={(evt, newValue) => OnChecklistItemChange(evt, newValue, que.dependencyGuid)}
                                         disabled={isChechlistCompleted}
                                         hidden={que.dependencyGuid && que.hide ? true : false}
-                                        data={que.antecedentQuestion}
+                                        name={que.antecedentQuestion}
                                     />
                                 )}
                             </Stack.Item>
