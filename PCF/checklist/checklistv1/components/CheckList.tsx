@@ -261,16 +261,27 @@ export const CheckList = (props: ICheckListProps) => {
                 });
 
             }
+            else if (event.target.type === 'checkbox') {//This is if the event is a checkbox, treat differently
+                if (event.target.name) {//Check if we have a dependency guid  
+                    ReBuildChecklist({ type: 'option', guid: event.target.name });
+                }
+                let opPush: IQuestionOptionsProps[] = [];
+                opPush.push({
+                    guid: event.target.id,
+                    optionValue: option.selected
+                });
+
+                questionsToSubmit.current.push({
+                    guid: option.id,
+                    questionOptions: opPush
+                });
+            }
             else {//This is a Radio or Dropdown control
                 //Debug to Complete Dependency Quesitons: this must be a Grid
-                console.log(option);
-                let opPush: IQuestionOptionsProps[] = []
+                let opPush: IQuestionOptionsProps[] = [];
                 //Implelement dependency guid here
                 //If there is one we need to rebuild the main Checklist Object to re-render the View with hidden/displayed quesions/options
                 if (option.data.dependencyGuid) {//there is a dependency guid get the dependent and set hide to false
-                    console.log('dependencyGuid--------------------');
-                    console.log(option.data.dependencyGuid);
-
                     ReBuildChecklist({ type: 'option', guid: option.data.dependencyGuid });
                 }
                 opPush.push({
@@ -299,26 +310,29 @@ export const CheckList = (props: ICheckListProps) => {
         if (QuestionList && SectionList && QuestionOptionsList) {
             for (let j = 0; j < QuestionList.length; j++) {//For all questions
                 let currQue = QuestionList[j];
+                
                 if (currQue.type !== QuestionType.TextArea) {//Only type without Options
                     let questionOptionsF: IQuestionOptionsProps[] = [];
-                    let hideQuestion = true;
+                    
                     for (let k = 0; k < QuestionOptionsList.length; k++) {//For all Options
                         let currOpt = QuestionOptionsList[k];                      
 
                         if (currQue.guid === currOpt.questionGuid) {
                             //make option visible if hidden set to false
-                            if (dependencyObj && dependencyObj.type === 'option') {//Check if it is an Option
-                                if (dependencyObj.guid === currOpt.questionGuid) {//check if the dependency GUID matches the current option GUID
-                                    currOpt.hide = false;
-                                    hideQuestion = false;
-                                }
+                           
+                            if (currQue.antecendentOption) {//Check if it has an antecedent option from question
+                                currOpt.dependencyGuid = currQue.antecendentOption;//Checkif there is an exisiting one first
                             }
-                            console.log('optiontopush');
-                            console.log(currOpt);
                             questionOptionsF.push(currOpt);
                         }
 
                     }
+                    let hideQuestion = null;
+                    if (dependencyObj && dependencyObj.type === 'option') {//Check if it is an Option
+                        hideQuestion = questionOptionsF.find((op: IQuestionOptionsProps) => op.guid === dependencyObj.guid);
+
+                    }
+                    console.log(hideQuestion);
                     questionsF.push({
                         sectionGuid: currQue?.sectionGuid,
                         guid: currQue?.guid,
@@ -332,7 +346,7 @@ export const CheckList = (props: ICheckListProps) => {
                         type: currQue?.type,
                         dependencyGuid: currQue?.dependencyGuid,
                         questionOptions: questionOptionsF,
-                        hide: hideQuestion
+                        hide: hideQuestion ? false : true
                     });
                 }
                 else {//Text ARea type question
@@ -341,8 +355,6 @@ export const CheckList = (props: ICheckListProps) => {
                             currQue.hide = false;
                         }
                     }
-                    console.log('questiontopush');
-                    console.log(currQue);
                     questionsF.push(currQue);
                 }
 
@@ -538,16 +550,20 @@ export const CheckList = (props: ICheckListProps) => {
         return (
             <Stack hidden={que.dependencyGuid && que.hide ? true : false }>
                 <Label
+                    id={que.guid}
                     required={que.required}
                 >
                     {que.title}
                 </Label>
                 {options.map((option: IQuestionOptionsProps) => (
                     <Stack.Item order={que.order}>
-                    <Checkbox
-                        label={option.optionLabel}
-                        defaultChecked={option.selected}
-                        onChange={(evt, option) => OnChecklistItemChange(evt, option)}
+                        <Checkbox
+                            id={option.guid}
+                            label={option.optionLabel}
+                            //checked={option.selected}
+                            onChange={(evt, option) => OnChecklistItemChange(evt, option)}
+                            name={option?.dependencyGuid}//Dependency guid added here
+                            
                         />
                     </Stack.Item>
                     ))}
@@ -597,7 +613,7 @@ export const CheckList = (props: ICheckListProps) => {
             return {
                 key: option.guid,//the option record guid
                 text: option.optionLabel,
-                selected: option?.optionValue,
+                selected: option?.selected,
                 data: {
                     'dependencyGuid': option?.dependencyGuid,
                     'answer': option.optionValue
