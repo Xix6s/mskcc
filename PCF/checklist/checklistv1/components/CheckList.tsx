@@ -245,10 +245,6 @@ export const CheckList = (props: ICheckListProps) => {
 
     //Handle on Change events of all form controls
     const OnChecklistItemChange = (event: any, option?: any, index?: any) => {
-        console.log('OnChecklistItemChange--------------');
-        console.log(event);
-        console.log(option);
-        console.log(index);
         if (CheckList) {
             if (event.target.localName === 'textarea') {//This is a text area control
                 if (event.target.name) {//Check if we have a dependency guid  
@@ -265,6 +261,8 @@ export const CheckList = (props: ICheckListProps) => {
                 if (event.target.name) {//Check if we have a dependency guid  
                     ReBuildChecklist({ type: 'option', guid: event.target.name });
                 }
+                //TODO:
+                //Complete this implementation
                 let opPush: IQuestionOptionsProps[] = [];
                 opPush.push({
                     guid: event.target.id,
@@ -302,12 +300,12 @@ export const CheckList = (props: ICheckListProps) => {
     };
 
     const ReBuildChecklist = (dependencyObj?: any) => {
-        console.log('ReBuildChecklist--------------');
-        console.log(dependencyObj);
+
         let questionsF: IQuestionProps[] = [];
         let sectionsF: ISectionProps[] = [];
 
         if (QuestionList && SectionList && QuestionOptionsList) {
+            let hideQuestion = true;
             for (let j = 0; j < QuestionList.length; j++) {//For all questions
                 let currQue = QuestionList[j];
                 
@@ -319,7 +317,12 @@ export const CheckList = (props: ICheckListProps) => {
 
                         if (currQue.guid === currOpt.questionGuid) {
                             //make option visible if hidden set to false
-                           
+                            if (dependencyObj && dependencyObj.type === 'option') {//Check if it is an Option
+                                if (dependencyObj.guid === currOpt.guid) {//check if the dependency GUID matches the current option GUID
+                                    currOpt.hide = false;
+                                    hideQuestion = false;
+                                }
+                            }
                             if (currQue.antecendentOption) {//Check if it has an antecedent option from question
                                 currOpt.dependencyGuid = currQue.antecendentOption;//Checkif there is an exisiting one first
                             }
@@ -327,12 +330,8 @@ export const CheckList = (props: ICheckListProps) => {
                         }
 
                     }
-                    let hideQuestion = null;
-                    if (dependencyObj && dependencyObj.type === 'option') {//Check if it is an Option
-                        hideQuestion = questionOptionsF.find((op: IQuestionOptionsProps) => op.guid === dependencyObj.guid);
 
-                    }
-                    console.log(hideQuestion);
+
                     questionsF.push({
                         sectionGuid: currQue?.sectionGuid,
                         guid: currQue?.guid,
@@ -346,7 +345,7 @@ export const CheckList = (props: ICheckListProps) => {
                         type: currQue?.type,
                         dependencyGuid: currQue?.dependencyGuid,
                         questionOptions: questionOptionsF,
-                        hide: hideQuestion ? false : true
+                        hide: hideQuestion
                     });
                 }
                 else {//Text ARea type question
@@ -544,8 +543,6 @@ export const CheckList = (props: ICheckListProps) => {
 
     //Method to Render Radio type
     const RenderCheckboxOptions = (options: IQuestionOptionsProps[], que: IQuestionProps): JSX.Element => {
-        console.log(options);
-        
 
         return (
             <Stack hidden={que.dependencyGuid && que.hide ? true : false }>
