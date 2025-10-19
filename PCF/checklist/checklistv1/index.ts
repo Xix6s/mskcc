@@ -42,6 +42,7 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         this._context = context;
         this._container = container;
         this._checkListGuid = context.mode.contextInfo.entityId;
+        //this._checkListGuid = context.utils.getEntityMetadata.arguments;
 
 
 
@@ -55,24 +56,15 @@ export class checklistv1 implements ComponentFramework.StandardControl<IInputs, 
         console.log('updateView---------------------');
 
         this._context = context;
-        this._context.utils.getEntityMetadata('xix_checklist', this._checkListGuid)
-            .then((entityMeta: ComponentFramework.PropertyHelper.EntityMetadata) => {
-                //Set Primary entity properties
-                //From entity metadata we can retireve security and infra data
-
-
-
-                let properties: ICheckListProps = {} as ICheckListProps;
-                properties.guid = this._checkListGuid;
-                properties.pcfContext = this._context;
-                properties.onSubmit = this.onSubmit;
-                // RENDER React Component
-                ReactDOM.render(
-                    React.createElement(CheckList, properties),
-                    this._container
-                );
-
-            });
+        let properties: ICheckListProps = {} as ICheckListProps;
+        properties.guid = this._checkListGuid;
+        properties.pcfContext = this._context;
+        properties.onSubmit = this.onSubmit;
+        // RENDER React Component
+        ReactDOM.render(
+            React.createElement(CheckList, properties),
+            this._container
+        );
        
     }
 

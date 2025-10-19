@@ -17,12 +17,82 @@ import { Spinner } from '@fluentui/react/lib/Spinner';
 import { useBoolean } from '@fluentui/react-hooks';
 import { IInputs } from '../generated/ManifestTypes';
 
-
+import { IContextualMenuProps, IIconProps } from '@fluentui/react';
+import { CommandButton } from '@fluentui/react/lib/Button';
+import { Dialog, DialogType, DialogFooter } from '@fluentui/react/lib/Dialog';
 
 
 initializeIcons();
 
 const dropdownStyles = { dropdown: { width: 300 } };
+const addIcon: IIconProps = { iconName: 'Add' };
+
+const modelProps = {
+    isBlocking: false,
+    styles: { main: { maxWidth: 450 } },
+};
+const options: IChoiceGroupOption[] = [
+    { key: 'A', text: 'Option A' },
+    { key: 'B', text: 'Option B' },
+    { key: 'C', text: 'Option C', disabled: true },
+];
+
+
+
+const menuProps: IContextualMenuProps = {
+    items: [
+        {
+            key: 'Section',
+            text: 'Questionaire Section',
+            iconProps: { iconName: 'ColumnVerticalSection' },
+        },
+        {
+            key: 'Text Area',
+            text: 'Text Area',
+            iconProps: {
+                iconName: 'InsertTextBox' },
+        },
+        {
+            key: 'Radio Groups',
+            text: 'Radio Groups',
+            iconProps: {
+                iconName: 'RadioBtnOff'
+            },
+        },
+        {
+            key: 'Dropdown',
+            text: 'Dropdown',
+            iconProps: {
+                iconName: 'Dropdown'
+            },
+        },
+        {
+            key: 'Checkbox',
+            text: 'Checkbox',
+            iconProps: {
+                iconName: 'CheckboxComposite'
+            },
+        },
+    ],
+    // By default, the menu will be focused when it opens. Uncomment the next line to prevent this.
+    // shouldFocusOnMount: false
+};
+
+const dialogContentProps =  {
+    type: DialogType.largeHeader,
+    title: 'All emails together',
+    subText: 'Your Inbox has changed. No longer does it include favorites, it is a singular destination for your emails.',
+};
+
+export interface IdialogProps {
+
+}
+
+export interface IButtonProps {
+    // These are set based on the toggles shown above the examples (not needed in real code)
+    disabled?: boolean;
+    checked?: boolean;
+}
 
 
 export interface IQuestionProps {
@@ -91,7 +161,8 @@ enum QuestionType {
 
 
 export const CheckList = (props: ICheckListProps) => {
-
+    console.log("-----------------------CheckList-----------");
+    console.log(props);
     const [isChechlistCompleted, SetChecklistCompleted] = useState(false);
     const [CheckList, SetCheckList] = useState<ICheckListProps>();
     const [SectionList, SetSectionList] = useState<ISectionProps[]>();
@@ -100,6 +171,10 @@ export const CheckList = (props: ICheckListProps) => {
     const [CopiesToMake, SetCopiesToMake] = useState(1);
     const [isChecklistTemplate, SetChecklistTemplate] = useState(false);
     const [isCopyDialogShown, { setTrue: openPanel, setFalse: dismissPanel }] = useBoolean(false);
+    const [isNewDialogShown, { setTrue: openNewPanel, setFalse: dismissNewPanel }] = useBoolean(false);
+
+    const [hideDialog, { toggle: toggleHideDialog }] = useBoolean(true);
+    const [hideDialogNew, { toggle: toggleHideDialogNew }] = useBoolean(true);
 
     const questionsToSubmit = React.useRef([] as IQuestionProps[]);
 
@@ -235,6 +310,54 @@ export const CheckList = (props: ICheckListProps) => {
                         }
                         
                         
+                    });
+            }
+
+        }
+
+    };
+
+    //Handle the New items
+    const OnChecklistNewItem = (event: any) => {
+        if (CheckList) {
+            for (let i = 0; i < CopiesToMake; i++) {
+                let checkl = {} as any;
+                checkl.xix_checklistname = CheckList.title;
+                checkl.xix_istemplate = false;
+                props.pcfContext.webAPI.createRecord('xix_checklist', checkl)
+                    .then((sucess) => {
+
+                        //Create Sections if we have any
+                        //We only create Checklist and Sections: Questions and Options are handled by Flows
+                        if (CheckList.sections) {
+                            for (let j = 0; j < CheckList.sections.length; j++) {
+                                let currSec = CheckList.sections[j];
+                                let sec = {} as any;
+                                sec.xix_checklistsectiontitle = currSec.title;
+                                sec["xix_ParentCheckList@odata.bind"] = "/xix_checklists(" + sucess.id + ")";
+                                sec.xix_requiredsection = currSec.required as any === "Yes" ? true : false;
+                                sec.xix_sectionorder = currSec.order;
+                                sec["xix_SectionTeamplate@odata.bind"] = "/xix_checklistsections(" + currSec.guid + ")";
+                                console.log(sec);
+                                props.pcfContext.webAPI.createRecord('xix_checklistsection', sec);
+
+                            }
+                            //Refresh to same record
+                            props.pcfContext.navigation.openForm({
+                                entityName: "xix_checklist",
+                                entityId: CheckList.guid
+                            });
+
+                        }
+                        else {
+                            //Refresh to same record
+                            props.pcfContext.navigation.openForm({
+                                entityName: "xix_checklist",
+                                entityId: CheckList.guid
+                            });
+                        }
+
+
                     });
             }
 
@@ -702,6 +825,22 @@ export const CheckList = (props: ICheckListProps) => {
                 {CheckList.renderCompleted === true && (
                     <Stack horizontalAlign='center'>
                         {renderSections()}
+                        {<CommandButton iconProps={addIcon} text="New item" menuProps={menuProps} onClick={toggleHideDialogNew} />}
+                        {/*{<>*/}
+                        {/*    <DefaultButton secondaryText="Opens the Sample Dialog" onClick={toggleHideDialogNew} text="Open Dialog" />*/}
+                        {/*    <Dialog*/}
+                        {/*        hidden={hideDialogNew}*/}
+                        {/*        onDismiss={toggleHideDialogNew}*/}
+                        {/*        dialogContentProps={dialogContentProps}*/}
+                        {/*        modalProps={modelProps}*/}
+                        {/*    >*/}
+                        {/*        <ChoiceGroup defaultSelectedKey="B" options={options} />*/}
+                        {/*        <DialogFooter>*/}
+                        {/*            <PrimaryButton onClick={toggleHideDialog} text="Save" />*/}
+                        {/*            <DefaultButton onClick={toggleHideDialog} text="Cancel" />*/}
+                        {/*        </DialogFooter>*/}
+                        {/*    </Dialog>*/}
+                        {/*</>}*/}
                         {isChecklistTemplate
                             ? <DefaultButton
                                 text="Copy"
@@ -751,7 +890,39 @@ export const CheckList = (props: ICheckListProps) => {
                         </Panel>
                     </div>
                 )}
-                
+                {isNewDialogShown && (
+                    <div>
+                        <Panel
+                            isOpen={isNewDialogShown}
+                            onDismiss={dismissNewPanel}
+                            headerText="Create New Question"
+                            closeButtonAriaLabel="Close"
+                            onRenderFooterContent={() => (
+                                <div>
+                                    <PrimaryButton
+                                        text="Save"
+                                        onClick={(evt) => OnChecklistNewItem(evt)}
+                                        allowDisabledFocus
+                                        disabled={false}
+                                    />
+                                </div>
+                            )}
+                            // Stretch panel content to fill the available height so the footer is positioned
+                            // at the bottom of the page
+                            isFooterAtBottom={true}
+                        >
+                            <p>
+                                <TextField
+                                    label="Enter Question Title:"
+                                    type="text"
+                                    width="50%"
+                                    required
+                                    onChange={(evt, amount: any) => { SetCopiesToMake(amount) }}
+                                />
+                            </p>
+                        </Panel>
+                    </div>
+                )}
 
             </>
             );
