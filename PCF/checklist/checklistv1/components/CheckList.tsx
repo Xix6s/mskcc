@@ -6,7 +6,7 @@ import { useState } from 'react'
 
 
 //FLUENT UI
-import { Checkbox, initializeIcons, Label, Panel } from '@fluentui/react';
+import { Checkbox, IContextualMenuItem, initializeIcons, Label, Panel } from '@fluentui/react';
 import { DefaultButton, PrimaryButton } from '@fluentui/react/lib/Button';
 import { ChoiceGroup, IChoiceGroupOption } from '@fluentui/react/lib/ChoiceGroup';
 import { Dropdown, DropdownMenuItemType, IDropdownStyles, IDropdownOption } from '@fluentui/react/lib/Dropdown';
@@ -37,43 +37,16 @@ const options: IChoiceGroupOption[] = [
     { key: 'C', text: 'Option C', disabled: true },
 ];
 
-
+const menuItems: IContextualMenuItem[] = [
+    { key: 'section', text: 'New Section', onClick: () => console.log('New section') },
+    { key: 'textArea', text: 'Text Area', onClick: () => console.log('Text Area clicked') },
+    { key: 'radioGroups', text: 'Radio Groups', onClick: () => console.log('Radio Groups clicked') },
+    { key: 'dropdown', text: 'Dropdown', onClick: () => console.log('Dropdown clicked') },
+    { key: 'checkbox', text: 'Checkboxw', href: 'http://bing.com' },
+];
 
 const menuProps: IContextualMenuProps = {
-    items: [
-        {
-            key: 'Section',
-            text: 'Questionaire Section',
-            iconProps: { iconName: 'ColumnVerticalSection' },
-        },
-        {
-            key: 'Text Area',
-            text: 'Text Area',
-            iconProps: {
-                iconName: 'InsertTextBox' },
-        },
-        {
-            key: 'Radio Groups',
-            text: 'Radio Groups',
-            iconProps: {
-                iconName: 'RadioBtnOff'
-            },
-        },
-        {
-            key: 'Dropdown',
-            text: 'Dropdown',
-            iconProps: {
-                iconName: 'Dropdown'
-            },
-        },
-        {
-            key: 'Checkbox',
-            text: 'Checkbox',
-            iconProps: {
-                iconName: 'CheckboxComposite'
-            },
-        },
-    ],
+    items: menuItems
     // By default, the menu will be focused when it opens. Uncomment the next line to prevent this.
     // shouldFocusOnMount: false
 };
@@ -179,7 +152,7 @@ export const CheckList = (props: ICheckListProps) => {
     const questionsToSubmit = React.useRef([] as IQuestionProps[]);
 
     React.useEffect(
-        () => {
+         () => {
             if (!CheckList?.dataFetched) {//Populate all Checklist Field data
                 getChecklistMetadata();
             }
@@ -928,3 +901,4 @@ export const CheckList = (props: ICheckListProps) => {
             );
     }
 };
+
