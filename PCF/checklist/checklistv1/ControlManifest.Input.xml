@@ -23,29 +23,13 @@
 	  </type-group>
 
     <external-service-usage enabled="false">
-      <!--UNCOMMENT TO ADD EXTERNAL DOMAINS
-      <domain></domain>
-      <domain></domain>
-      -->
+
     </external-service-usage>
     <!-- dataset node represents a set of entity records on CDS; allow more than one datasets -->
     <data-set name="sampleDataSet" display-name-key="Dataset_Display_Key">
-      <!-- 'property-set' node represents a unique, configurable property that each record in the dataset must provide. -->
-
-
-		<!--<property-set name="sectiontitle" display-name-key="Property_Display_Key_title" description-key="Property_Desc_Key"
-      of-type-group="strings" usage="bound" required="true" />
-		<property-set name="sectiontext" display-name-key="Property_Display_Key_text" description-key="Property_Desc_Key"
-      of-type-group="strings" usage="bound" required="true" />
-		<property-set name="sectionrequired" display-name-key="Property_Display_Key_required" description-key="Property_Desc_Key"
-      of-type-group="strings" usage="bound" required="true" />-->
     </data-set>
     <resources>
       <code path="index.ts" order="1"/>
-      <!-- UNCOMMENT TO ADD MORE RESOURCES
-      <css path="css/checklistv1.css" order="1" />
-      <resx path="strings/checklistv1.1033.resx" version="1.0.0" />
-      -->
     </resources>  
     <feature-usage>
       <uses-feature name="Utility" required="true" />

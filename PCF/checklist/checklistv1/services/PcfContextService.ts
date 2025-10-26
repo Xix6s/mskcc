@@ -8,8 +8,6 @@ export interface IPcfContextServiceProps {
 export class PcfContextService {
 
     constructor(props?: IPcfContextServiceProps) {
-        console.log('PcfContextService----------------');
-        console.log(props);
         if (props) {
 
 

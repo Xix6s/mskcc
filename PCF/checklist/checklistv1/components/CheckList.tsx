@@ -42,7 +42,7 @@ const menuItems: IContextualMenuItem[] = [
     { key: 'textArea', text: 'Text Area', onClick: () => console.log('Text Area clicked') },
     { key: 'radioGroups', text: 'Radio Groups', onClick: () => console.log('Radio Groups clicked') },
     { key: 'dropdown', text: 'Dropdown', onClick: () => console.log('Dropdown clicked') },
-    { key: 'checkbox', text: 'Checkboxw', href: 'http://bing.com' },
+    { key: 'checkbox', text: 'Checkbox', onClick: () => console.log('Checkbox clicked') },
 ];
 
 const menuProps: IContextualMenuProps = {
@@ -56,10 +56,6 @@ const dialogContentProps =  {
     title: 'All emails together',
     subText: 'Your Inbox has changed. No longer does it include favorites, it is a singular destination for your emails.',
 };
-
-export interface IdialogProps {
-
-}
 
 export interface IButtonProps {
     // These are set based on the toggles shown above the examples (not needed in real code)
@@ -134,8 +130,6 @@ enum QuestionType {
 
 
 export const CheckList = (props: ICheckListProps) => {
-    console.log("-----------------------CheckList-----------");
-    console.log(props);
     const [isChechlistCompleted, SetChecklistCompleted] = useState(false);
     const [CheckList, SetCheckList] = useState<ICheckListProps>();
     const [SectionList, SetSectionList] = useState<ISectionProps[]>();
@@ -799,21 +793,6 @@ export const CheckList = (props: ICheckListProps) => {
                     <Stack horizontalAlign='center'>
                         {renderSections()}
                         {<CommandButton iconProps={addIcon} text="New item" menuProps={menuProps} onClick={toggleHideDialogNew} />}
-                        {/*{<>*/}
-                        {/*    <DefaultButton secondaryText="Opens the Sample Dialog" onClick={toggleHideDialogNew} text="Open Dialog" />*/}
-                        {/*    <Dialog*/}
-                        {/*        hidden={hideDialogNew}*/}
-                        {/*        onDismiss={toggleHideDialogNew}*/}
-                        {/*        dialogContentProps={dialogContentProps}*/}
-                        {/*        modalProps={modelProps}*/}
-                        {/*    >*/}
-                        {/*        <ChoiceGroup defaultSelectedKey="B" options={options} />*/}
-                        {/*        <DialogFooter>*/}
-                        {/*            <PrimaryButton onClick={toggleHideDialog} text="Save" />*/}
-                        {/*            <DefaultButton onClick={toggleHideDialog} text="Cancel" />*/}
-                        {/*        </DialogFooter>*/}
-                        {/*    </Dialog>*/}
-                        {/*</>}*/}
                         {isChecklistTemplate
                             ? <DefaultButton
                                 text="Copy"
@@ -901,4 +880,3 @@ export const CheckList = (props: ICheckListProps) => {
             );
     }
 };
-
