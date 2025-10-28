@@ -38,11 +38,11 @@ const options: IChoiceGroupOption[] = [
 ];
 
 const menuItems: IContextualMenuItem[] = [
-    { key: 'section', text: 'New Section', onClick: () => console.log('New section') },
-    { key: 'textArea', text: 'Text Area', onClick: () => console.log('Text Area clicked') },
-    { key: 'radioGroups', text: 'Radio Groups', onClick: () => console.log('Radio Groups clicked') },
-    { key: 'dropdown', text: 'Dropdown', onClick: () => console.log('Dropdown clicked') },
-    { key: 'checkbox', text: 'Checkbox', onClick: () => console.log('Checkbox clicked') },
+    { key: 'section', text: 'New Section', iconProps: { iconName: 'PaddingTop'}, onClick: () => console.log('New section') },
+    { key: 'textArea', text: 'Text Area', iconProps: { iconName: 'AddNotes' }, onClick: () => console.log('Text Area clicked') },
+    { key: 'radioGroups', text: 'Radio Groups', iconProps: { iconName: 'RadioBtnOn' }, onClick: () => console.log('Radio Groups clicked') },
+    { key: 'dropdown', text: 'Dropdown', iconProps: { iconName: 'Dropdown' }, onClick: () => console.log('Dropdown clicked') },
+    { key: 'checkbox', text: 'Checkbox', iconProps: { iconName: 'CheckboxComposite' }, onClick: () => console.log('Checkbox clicked') },
 ];
 
 const menuProps: IContextualMenuProps = {
