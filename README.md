@@ -5,6 +5,10 @@ The Component allows you to cerate Questionaires, with the aollowing Question Ty
 
 <img width="655" height="383" alt="image" src="https://github.com/Xix6s/mskcc/blob/master/img/pic1.png" />
 
+Create New Questions or a Sextion to Hold a new group of Questions.
+
+<img width="655" height="383" alt="image" src="https://github.com/Xix6s/mskcc/blob/master/img/pic6.png" />
+
 A section can have many Questions:
 <img width="655" height="383" alt="image" src="https://github.com/Xix6s/mskcc/blob/master/img/pic2.png" />
 
@@ -19,3 +23,5 @@ Radio and Dropdown also Have options.
 
 Solution has the Tables necessary.
 Import PCF Control first and then Solution.
+
+<img width="655" height="383" alt="image" src="https://github.com/Xix6s/mskcc/blob/master/img/pic5.png" />
