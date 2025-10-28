@@ -10,7 +10,8 @@ Create New Questions or a Section to Hold a new group of Questions.
 <img width="655" height="383" alt="image" src="https://github.com/Xix6s/mskcc/blob/master/img/pic6.png" />
 
 A section can have many Questions:
-<img width="350" height="383" alt="image" src="https://github.com/Xix6s/mskcc/blob/master/img/pic2.png" />
+
+<img width="400" height="300" alt="image" src="https://github.com/Xix6s/mskcc/blob/master/img/pic2.png" />
 
 Questions, can then be associated to Sections:
 
